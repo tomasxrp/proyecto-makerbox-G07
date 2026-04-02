@@ -1,0 +1,14 @@
+{
+  "env": {
+    "node": true,
+    "es2021": true
+  },
+  "extends": [
+    "airbnb-base",
+    "prettier"
+  ],
+  "rules": {
+    "camelcase": "error",
+    "no-console": "warn"
+  }
+}
