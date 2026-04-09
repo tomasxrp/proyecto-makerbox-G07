@@ -1,0 +1,4 @@
+sincronizar prisma con postgre: npx prisma migrate dev --name algunnombre
+Aplicar formatter de prisma: npx prisma format
+
+Para ver los datos: npx prisma studio

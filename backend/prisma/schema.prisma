@@ -1,11 +1,11 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -26,6 +26,35 @@ enum EstadoSemestre {
   INACTIVO
 }
 
+enum EstadoAyudantia {
+  ACTIVA
+  INACTIVA
+}
+
+enum EstadoAsistenciaAyudantia {
+  ASISTIO
+  FALTO
+  JUSTIFICO
+}
+
+enum EstadoImpresion {
+  PENDIENTE
+  EN_PROCESO
+  COMPLETADA
+  CANCELADA
+}
+
+enum EstadoReserva {
+  PENDIENTE
+  CONFIRMADA
+  CANCELADA
+}
+
+enum TipoMovimientoStock {
+  ENTRADA
+  SALIDA
+}
+
 model Usuario {
   id          String  @id @default(uuid())
   rut         String  @unique
@@ -35,10 +64,22 @@ model Usuario {
   passUsuario String
   usuarioRol  TipoRol @default(SOLICITANTE)
 
-  borradoEn     DateTime?
-  creadoEn      DateTime  @default(now())
-  actualizadoEn DateTime  @updatedAt
-  cursos        Curso[]
+  borradoEn             DateTime?
+  creadoEn              DateTime               @default(now())
+  actualizadoEn         DateTime               @updatedAt
+  cursos                Curso[]
+  estudianteCursos      EstudianteCurso[]
+  grupoEstudiantes      GrupoEstudiante[]
+  inscripcionAyudantias InscripcionAyudantia[]
+  reservas              Reserva[]
+  ayudantias            Ayudantia[]
+
+  impresionesEstudiante   Impresion[]    @relation("ImpresionEstudiante")
+  impresionesAyudante     Impresion[]    @relation("ImpresionAyudante")
+  UsoImpresionSolicitante UsoImpresion[] @relation("UsoImpresionSolicitante")
+  UsoImpresionEstudiante  UsoImpresion[] @relation("UsoImpresionEstudiante")
+
+  movimientoStocks MovimientoStock[]
 }
 
 model Semestre {
@@ -50,10 +91,10 @@ model Semestre {
   estado      EstadoSemestre @default(ACTIVO)
 
   borradoEn     DateTime?
-  creadoEn      DateTime  @default(now())
-  actualizadoEn DateTime  @updatedAt
-
-  cursos Curso[]
+  creadoEn      DateTime       @default(now())
+  actualizadoEn DateTime       @updatedAt
+  cursos        Curso[]
+  usoImpresions UsoImpresion[]
 }
 
 model Articulo {
@@ -64,14 +105,17 @@ model Articulo {
   alertaStock    Int?
   notificarStock Boolean?
 
-  actualizadoEn DateTime @updatedAt
+  actualizadoEn    DateTime          @updatedAt
+  movimientoStocks MovimientoStock[]
+  usoImpresions    UsoImpresion[]
 }
 
 model BloqueHorario {
-  id         String @id @default(uuid())
-  nroBloque  Int
-  horaInicio String
-  horaFin    String
+  id               String            @id @default(uuid())
+  nroBloque        Int
+  horaInicio       String
+  horaFin          String
+  bloqueReservados BloqueReservado[]
 }
 
 model Curso {
@@ -84,7 +128,165 @@ model Curso {
   creadoEn      DateTime  @default(now())
   actualizadoEn DateTime  @updatedAt
 
-  //relaciones
-  semestre Semestre @relation(fields: [refSemestre], references: [id])
-  profesor Usuario  @relation(fields: [refProfesor], references: [id])
+  semestre         Semestre          @relation(fields: [refSemestre], references: [id])
+  profesor         Usuario           @relation(fields: [refProfesor], references: [id])
+  estudianteCursos EstudianteCurso[]
+  grupoCursos      GrupoCurso[]
+  ayudantias       Ayudantia[]
+  impresions       Impresion[]
+}
+
+model EstudianteCurso {
+  refCurso      String
+  refEstudiante String
+
+  curso      Curso   @relation(fields: [refCurso], references: [id])
+  estudiante Usuario @relation(fields: [refEstudiante], references: [id])
+
+  @@id([refCurso, refEstudiante])
+}
+
+model GrupoCurso {
+  id          String @id @default(uuid())
+  refCurso    String
+  nombreGrupo String
+
+  curso            Curso             @relation(fields: [refCurso], references: [id])
+  grupoEstudiantes GrupoEstudiante[]
+  ayudantias       Ayudantia[]
+}
+
+model GrupoEstudiante {
+  refGrupo      String
+  refEstudiante String
+
+  grupo      GrupoCurso @relation(fields: [refGrupo], references: [id])
+  estudiante Usuario    @relation(fields: [refEstudiante], references: [id])
+
+  @@id([refGrupo, refEstudiante])
+}
+
+model Ayudantia {
+  id              String  @id @default(uuid())
+  nombreAyudantia String
+  refCurso        String
+  refGrupo        String?
+  refAyudante     String
+
+  horario               DateTime
+  cupoMaximo            Int
+  estado                EstadoAyudantia        @default(ACTIVA)
+  inscripcionAyudantias InscripcionAyudantia[]
+
+  curso    Curso       @relation(fields: [refCurso], references: [id])
+  grupo    GrupoCurso? @relation(fields: [refGrupo], references: [id])
+  ayudante Usuario     @relation(fields: [refAyudante], references: [id])
+}
+
+model InscripcionAyudantia {
+  refAyudantia  String
+  refEstudiante String
+
+  fechaInscripcion DateTime                  @default(now())
+  estado           EstadoAsistenciaAyudantia @default(ASISTIO)
+
+  ayudantia  Ayudantia @relation(fields: [refAyudantia], references: [id])
+  estudiante Usuario   @relation(fields: [refEstudiante], references: [id])
+
+  @@id([refAyudantia, refEstudiante])
+}
+
+model Reserva {
+  id                  String        @id @default(uuid())
+  fechaReserva        DateTime
+  estadoReserva       EstadoReserva @default(PENDIENTE)
+  solicitanteNombre   String
+  solicitanteApellido String
+  solicitanteCorreo   String
+  solicitanteRut      String
+
+  refAyudante   String?
+  motivoReserva String
+  creadoEn      DateTime @default(now())
+
+  ayudante         Usuario?          @relation(fields: [refAyudante], references: [id])
+  bloqueReservados BloqueReservado[]
+}
+
+model Impresion {
+  id                  String  @id @default(uuid())
+  solicitanteNombre   String?
+  solicitanteApellido String?
+  solicitanteCorreo   String?
+  solicitanteRut      String?
+
+  refEstudiante           String?
+  refAyudante             String?
+  tipoUsuario             String?
+  tipoSolicitud           String?
+  nombreCurso             String?
+  refCurso                String?
+  colorOpcion1            String
+  colorOpcion2            String
+  colorOpcion3            String
+  comentarioTecnico       String?
+  urlModelo3d             String
+  urlModeloStl            String
+  comentario              String
+  estado                  EstadoImpresion @default(PENDIENTE)
+  observacionAyudante     String?
+  motivoRechazo           String?
+  tiempoEstimadoImpresion String?
+
+  inicioImpresion DateTime?
+  creadoEn        DateTime  @default(now())
+
+  estudiante Usuario? @relation("ImpresionEstudiante", fields: [refEstudiante], references: [id])
+  ayudante   Usuario? @relation("ImpresionAyudante", fields: [refAyudante], references: [id])
+  curso      Curso?   @relation(fields: [refCurso], references: [id])
+
+  usoImpresions UsoImpresion[]
+}
+
+model MovimientoStock {
+  id              String              @id @default(uuid())
+  refArticulo     String
+  refUsuario      String
+  tipoMovimiento  TipoMovimientoStock
+  cambioStock     Int
+  stockResultante Int
+  observacion     String?
+  creadoEn        DateTime?           @default(now())
+
+  articulo Articulo @relation(fields: [refArticulo], references: [id])
+  usuario  Usuario  @relation(fields: [refUsuario], references: [id])
+}
+
+model UsoImpresion {
+  id                String  @id @default(uuid())
+  refImpresion      String
+  refSolicitante    String?
+  refEstudiante     String?
+  refSemestre       String
+  cantidadFilamento Int
+  refArticulo       String
+
+  creadoEn      DateTime? @default(now())
+  actualizadoEn DateTime? @updatedAt
+
+  impresion   Impresion @relation(fields: [refImpresion], references: [id])
+  solicitante Usuario?  @relation("UsoImpresionSolicitante", fields: [refSolicitante], references: [id])
+  estudiante  Usuario?  @relation("UsoImpresionEstudiante", fields: [refEstudiante], references: [id])
+  semestre    Semestre  @relation(fields: [refSemestre], references: [id])
+  articulo    Articulo  @relation(fields: [refArticulo], references: [id])
+}
+
+model BloqueReservado {
+  bloqueId  String
+  reservaId String
+
+  bloque  BloqueHorario @relation(fields: [bloqueId], references: [id])
+  reserva Reserva       @relation(fields: [reservaId], references: [id])
+
+  @@id([bloqueId, reservaId])
 }
