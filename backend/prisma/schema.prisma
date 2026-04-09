@@ -1,15 +1,90 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum TipoRol {
+  ADMINISTRADOR
+  PROFESOR
+  AYUDANTE
+  ESTUDIANTE
+  SOLICITANTE
+}
+
+enum EstadoSemestre {
+  ACTIVO
+  INACTIVO
+}
+
+model Usuario {
+  id          String  @id @default(uuid())
+  rut         String  @unique
+  nombre      String
+  apellido    String
+  correo      String  @unique
+  passUsuario String
+  usuarioRol  TipoRol @default(SOLICITANTE)
+
+  borradoEn     DateTime?
+  creadoEn      DateTime  @default(now())
+  actualizadoEn DateTime  @updatedAt
+  cursos        Curso[]
+}
+
+model Semestre {
+  id          String         @id @default(uuid())
+  anio        Int
+  periodo     Int
+  fechaInicio DateTime
+  fechaFin    DateTime
+  estado      EstadoSemestre @default(ACTIVO)
+
+  borradoEn     DateTime?
+  creadoEn      DateTime  @default(now())
+  actualizadoEn DateTime  @updatedAt
+
+  cursos Curso[]
+}
+
+model Articulo {
+  id             String   @id @default(uuid())
+  nombreArticulo String
+  stockActual    Int?
+  unidadMedida   String
+  alertaStock    Int?
+  notificarStock Boolean?
+
+  actualizadoEn DateTime @updatedAt
+}
+
+model BloqueHorario {
+  id         String @id @default(uuid())
+  nroBloque  Int
+  horaInicio String
+  horaFin    String
+}
+
+model Curso {
+  id          String @id @default(uuid())
+  nombre      String
+  refSemestre String
+  refProfesor String
+
+  borradoEn     DateTime?
+  creadoEn      DateTime  @default(now())
+  actualizadoEn DateTime  @updatedAt
+
+  //relaciones
+  semestre Semestre @relation(fields: [refSemestre], references: [id])
+  profesor Usuario  @relation(fields: [refProfesor], references: [id])
 }
