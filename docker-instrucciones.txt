@@ -1,0 +1,6 @@
+1.Abrir docker desktop
+2.Ir a la raiz del proyecto, donde esta el docker-compose.yml
+3. Ejecutar docker-compose up -d
+
+
+PARAR APAGAR: docker-compose down

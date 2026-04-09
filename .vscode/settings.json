@@ -4,8 +4,6 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   },
-  "eslint.workingDirectories": [
-    "./frontend",
-    "./backend"
-  ]
+  "eslint.workingDirectories": ["./frontend", "./backend"],
+  "prisma.pinToPrisma6": true
 }
