@@ -13,7 +13,7 @@ const registrarUsuario = async (req, res) => {
       rol
     );
 
-    res.status(201).json({
+    res.status(202).json({
       mensaje: 'Usuario registrado exitosamente',
       usuario: nuevoUsuario,
     });
@@ -25,6 +25,28 @@ const registrarUsuario = async (req, res) => {
   }
 };
 
+const loginUsuario = async (req, res) => {
+  try {
+    const { correo, contrasena } = req.body;
+
+    const resultadoLogin = await usuarioService.loginUsuario(
+      correo,
+      contrasena
+    );
+
+    res.status(200).json({
+      mensaje: 'Login exitoso',
+      resultadoLogin,
+    });
+  } catch (error) {
+    console.error('Error al iniciar sesión:', error);
+    res.status(401).json({
+      mensaje: error.message || 'Error al iniciar sesión',
+    });
+  }
+};
+
 module.exports = {
   registrarUsuario,
+  loginUsuario,
 };

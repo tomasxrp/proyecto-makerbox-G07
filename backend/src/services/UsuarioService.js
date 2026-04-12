@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const prisma = new PrismaClient();
 
@@ -49,6 +50,46 @@ const registrarUsuario = async (
   return response;
 };
 
+const loginUsuario = async (correo, contrasena) => {
+  // Verificar si el correo existe en la base de datos
+  const usuarioObtenido = await prisma.usuario.findUnique({
+    where: {
+      correo,
+    },
+  });
+  if (!usuarioObtenido) {
+    throw new Error('Correo no registrado');
+  }
+
+  // verificar si la contrasena es correcta
+  const contrasenaValida = await bcrypt.compare(
+    contrasena,
+    usuarioObtenido.passUsuario
+  );
+  if (!contrasenaValida) {
+    throw new Error('Contraseña incorrecta');
+  }
+
+  const payloadJWT = {
+    id: usuarioObtenido.id,
+    rol: usuarioObtenido.usuarioRol,
+  };
+
+  const token = jwt.sign(payloadJWT, process.env.JWT_SECRET, {
+    expiresIn: '24h',
+  });
+
+  return {
+    token,
+    usuario: {
+      nombre: usuarioObtenido.nombre,
+      apellido: usuarioObtenido.apellido,
+      rol: usuarioObtenido.usuarioRol,
+    },
+  };
+};
+
 module.exports = {
   registrarUsuario,
+  loginUsuario,
 };
