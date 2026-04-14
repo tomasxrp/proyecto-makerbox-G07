@@ -46,7 +46,29 @@ const loginUsuario = async (req, res) => {
   }
 };
 
+const eliminarUsuario = async (req, res) => {
+  try {
+    const { correo } = req.params;
+    const { usuario } = req;
+
+    const usuarioEliminado = await usuarioService.eliminarUsuario(
+      usuario,
+      correo
+    );
+
+    res.status(200).json({
+      mensaje: 'Usuario borrado con exito',
+      usuario: usuarioEliminado,
+    });
+  } catch (error) {
+    res.status(401).json({
+      mensaje: error.message || 'Error al borrar usuario',
+    });
+  }
+};
+
 module.exports = {
   registrarUsuario,
   loginUsuario,
+  eliminarUsuario,
 };
