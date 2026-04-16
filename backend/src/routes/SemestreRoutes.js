@@ -1,0 +1,16 @@
+const { Router } = require('express');
+const { validarToken } = require('../middlewares/validarToken');
+const { validarSemestre } = require('../middlewares/validarSemestre');
+const semestreController = require('../controllers/SemestreController');
+
+const router = Router();
+
+// Definicion de rutas
+router.post(
+  '/crear',
+  validarToken,
+  validarSemestre,
+  semestreController.crearSemestre
+);
+
+module.exports = router;
