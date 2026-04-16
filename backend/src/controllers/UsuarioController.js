@@ -67,8 +67,30 @@ const eliminarUsuario = async (req, res) => {
   }
 };
 
+const obtenerUsuarioPorCorreo = async (req, res) => {
+  try {
+    const { correo } = req.params;
+    const { usuario } = req;
+
+    const usuarioObtenido = await usuarioService.obtenerUsuarioPorCorreo(
+      correo,
+      usuario
+    );
+
+    res.status(200).json({
+      mensaje: 'Usuario obtenido con exito',
+      usuario: usuarioObtenido,
+    });
+  } catch (error) {
+    res.status(401).json({
+      mensaje: error.message || 'Error al obtener usuario',
+    });
+  }
+};
+
 module.exports = {
   registrarUsuario,
   loginUsuario,
   eliminarUsuario,
+  obtenerUsuarioPorCorreo,
 };
