@@ -88,9 +88,27 @@ const obtenerUsuarioPorCorreo = async (req, res) => {
   }
 };
 
+const ObtenerListaUsuarios = async (req, res) => {
+  try {
+    const { usuario } = req;
+
+    const listaUsuarios = await usuarioService.ObtenerListaUsuarios(usuario);
+
+    res.status(200).json({
+      mensaje: 'Lista de usuarios obtenida con exito',
+      usuarios: listaUsuarios,
+    });
+  } catch (error) {
+    res.status(401).json({
+      mensaje: error.message || 'Error al obtener lista de usuarios',
+    });
+  }
+};
+
 module.exports = {
   registrarUsuario,
   loginUsuario,
   eliminarUsuario,
   obtenerUsuarioPorCorreo,
+  ObtenerListaUsuarios,
 };
