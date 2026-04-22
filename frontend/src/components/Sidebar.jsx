@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 export default function Sidebar() {
   const user = {
     name: 'Bryan',
-    role: 'profesor', // cambia esto para probar
+    role: 'admin',
   };
 
   return (

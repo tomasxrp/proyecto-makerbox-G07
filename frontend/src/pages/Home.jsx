@@ -3,14 +3,13 @@ import ProfesorView from '../components/dashboard/ProfesorView';
 import AlumnoView from '../components/dashboard/AlumnoView';
 
 export default function Home() {
-  // ⚠️ temporal (luego viene del backend)
   const user = {
     name: 'Bryan',
-    role: 'admin', // cambia a "profesor" o "alumno" para probar
+    role: 'admin',
   };
 
   const renderView = () => {
-    switch ('profesor') {
+    switch ('admin') {
       case 'admin':
         return <AdminView />;
       case 'profesor':
