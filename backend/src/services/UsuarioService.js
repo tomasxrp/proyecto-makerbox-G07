@@ -140,9 +140,28 @@ const obtenerUsuarioPorCorreo = async (correo, usuario) => {
   };
 };
 
+const ObtenerListaUsuarios = async (usuario) => {
+  if (usuario.rol !== 'ADMINISTRADOR') {
+    throw new Error('El usuario no tiene los permisos necesarios');
+  }
+
+  const listaUsuarios = await prisma.usuario.findMany({
+    select: {
+      rut: true,
+      nombre: true,
+      apellido: true,
+      correo: true,
+      usuarioRol: true,
+    },
+  });
+
+  return listaUsuarios;
+};
+
 module.exports = {
   registrarUsuario,
   loginUsuario,
   eliminarUsuario,
   obtenerUsuarioPorCorreo,
+  ObtenerListaUsuarios,
 };
