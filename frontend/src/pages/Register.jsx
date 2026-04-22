@@ -92,48 +92,6 @@ export default function Register() {
             ></span>
           </div>
         </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div class="space-y-1.5 col-span-2 sm:col-span-1">
-            <label
-              class="text-sm font-semibold text-on-surface-variant px-1"
-              for="role"
-            >
-              Rol
-            </label>
-            <div class="relative">
-              <select
-                class="w-full appearance-none px-4 py-3 rounded-lg bg-surface-container-lowest border-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary transition-all outline-none pr-10"
-                id="role"
-              >
-                <option value="student">Estudiante</option>
-                <option value="professor">Profesor</option>
-                <option value="assistant">Asistente</option>
-              </select>
-              <span
-                class="absolute right-3 top-3.5 material-symbols-outlined text-outline pointer-events-none"
-                data-icon="expand_more"
-              ></span>
-            </div>
-          </div>
-          <div class="space-y-1.5 col-span-2 sm:col-span-1">
-            <label
-              class="text-sm font-semibold text-on-surface-variant px-1"
-              for="id_doc"
-            >
-              ID Institucional
-            </label>
-            <div class="relative">
-              <input
-                class="w-full px-4 py-3 rounded-lg bg-surface-container-lowest border-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary transition-all placeholder:text-outline outline-none"
-                id="id_doc"
-                placeholder="Opcional"
-                type="text"
-              />
-            </div>
-          </div>
-        </div>
-
         <div class="space-y-1.5">
           <label
             class="text-sm font-semibold text-on-surface-variant px-1"

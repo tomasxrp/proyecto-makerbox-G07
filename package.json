@@ -1,0 +1,40 @@
+{
+  "devDependencies": {
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.10",
+    "tailwindcss": "^4.2.2"
+  },
+  "name": "proyecto-makerbox-g07",
+  "version": "1.0.0",
+  "description": "| Nombre | Matrícula | Rol | | :--- | :--- | :--- | | **Jose Tomas Rivera Perez** | `2023407015` |  Project Manager (PM) | | **Bryan Maycol Ahumada Ibarra** | `2018407803` |  Desarrollador | | **Nelson Eduardo Garrido Céspedes** | `2020407008` |  Desarrollador |",
+  "main": "index.js",
+  "dependencies": {
+    "baseline-browser-mapping": "^2.10.19",
+    "browserslist": "^4.28.2",
+    "caniuse-lite": "^1.0.30001788",
+    "electron-to-chromium": "^1.5.337",
+    "escalade": "^3.2.0",
+    "fraction.js": "^5.3.4",
+    "nanoid": "^3.3.11",
+    "node-releases": "^2.0.37",
+    "picocolors": "^1.1.1",
+    "postcss-value-parser": "^4.2.0",
+    "source-map-js": "^1.2.1",
+    "update-browserslist-db": "^1.2.3"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tomasxrp/proyecto-makerbox-G07.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/tomasxrp/proyecto-makerbox-G07/issues"
+  },
+  "homepage": "https://github.com/tomasxrp/proyecto-makerbox-G07#readme"
+}

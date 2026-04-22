@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   return (
     <main className="flex min-h-screen bg-background">
       {/* IZQUIERDA */}
