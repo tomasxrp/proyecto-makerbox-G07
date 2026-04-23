@@ -1,0 +1,37 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: ["main"]
+    paths: ["frontend/**"]
+  pull_request:
+    branches: ["main"]
+    paths: ["frontend/**"]
+
+jobs:
+  validar-frontend:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: ./frontend/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Ejecutar Linter (Airbnb + Prettier)
+        run: npm run lint
+
+      - name: Validar compilación (Build)
+        run: npm run build
