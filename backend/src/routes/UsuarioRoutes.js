@@ -14,5 +14,7 @@ router.delete(
   validarToken,
   usuarioController.eliminarUsuario
 );
+router.get('/:correo', validarToken, usuarioController.obtenerUsuarioPorCorreo);
+router.get('/', validarToken, usuarioController.ObtenerListaUsuarios);
 
 module.exports = router;
