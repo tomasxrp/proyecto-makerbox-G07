@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import { Link , useNavigate } from 'react-router-dom';
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
@@ -21,16 +20,16 @@ export default function Login() {
             Iniciar sesión
           </h1>
 
-          <div class="space-y-2">
+          <div className="space-y-2">
             <label
-              class="text-sm font-semibold text-on-surface-variant flex items-center gap-2"
-              for="email"
+              className="text-sm font-semibold text-on-surface-variant flex items-center gap-2"
+              htmlFor="email"
             >
               Correo electrónico
             </label>
-            <div class="relative">
+            <div className="relative">
               <input
-                class="w-full px-4 py-3 bg-surface-container-lowest border border-outline-variant/20 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-outline text-on-surface"
+                className="w-full px-4 py-3 bg-surface-container-lowest border border-outline-variant/20 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-outline text-on-surface"
                 id="email"
                 placeholder="usuario@universidad.edu"
                 required=""
@@ -39,27 +38,27 @@ export default function Login() {
             </div>
           </div>
 
-          <div class="space-y-2">
-            <div class="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
               <label
-                class="text-sm font-semibold text-on-surface-variant flex items-center gap-2"
-                for="password"
+                className="text-sm font-semibold text-on-surface-variant flex items-center gap-2"
+                htmlFor="password"
               >
                 Contraseña
               </label>
             </div>
-            <div class="relative">
+            <div className="relative">
               <input
-                class="w-full px-4 py-3 bg-surface-container-lowest border border-outline-variant/20 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-outline text-on-surface pr-12"
+                className="w-full px-4 py-3 bg-surface-container-lowest border border-outline-variant/20 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-outline text-on-surface pr-12"
                 id="password"
                 placeholder="••••••••"
                 required=""
                 type="password"
               />
               <button
-                class="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors"
                 type="button"
-              ></button>
+               />
             </div>
           </div>
 

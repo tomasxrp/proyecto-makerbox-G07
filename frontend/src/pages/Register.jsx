@@ -52,88 +52,88 @@ export default function Register() {
       >
         <h1 className="text-2xl font-bold mb-4">Registro</h1>
 
-        <div class="space-y-1.5">
+        <div className="space-y-1.5">
           <label
-            class="text-sm font-semibold text-on-surface-variant px-1"
-            for="full_name"
+            className="text-sm font-semibold text-on-surface-variant px-1"
+            htmlFor="full_name"
           >
             Nombre Completo
           </label>
-          <div class="relative group">
+          <div className="relative group">
             <input
-              class="w-full px-4 py-3 rounded-lg bg-surface-container-lowest border-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary transition-all placeholder:text-outline outline-none"
+              className="w-full px-4 py-3 rounded-lg bg-surface-container-lowest border-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary transition-all placeholder:text-outline outline-none"
               id="full_name"
               name="full_name"
               placeholder="Ej. Dr. Javier Soler"
               type="text"
             />
-            <span class="absolute right-3 top-3.5 material-symbols-outlined text-outline text-sm group-focus-within:text-primary"></span>
+            <span className="absolute right-3 top-3.5 material-symbols-outlined text-outline text-sm group-focus-within:text-primary" />
           </div>
         </div>
 
-        <div class="space-y-1.5">
+        <div className="space-y-1.5">
           <label
-            class="text-sm font-semibold text-on-surface-variant px-1"
-            for="email"
+            className="text-sm font-semibold text-on-surface-variant px-1"
+            htmlFor="email"
           >
             Correo Electrónico
           </label>
-          <div class="relative group">
+          <div className="relative group">
             <input
-              class="w-full px-4 py-3 rounded-lg bg-surface-container-lowest border-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary transition-all placeholder:text-outline outline-none"
+              className="w-full px-4 py-3 rounded-lg bg-surface-container-lowest border-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary transition-all placeholder:text-outline outline-none"
               id="email"
               name="email"
               placeholder="usuario@institucion.edu"
               type="email"
             />
             <span
-              class="absolute right-3 top-3.5 material-symbols-outlined text-outline text-sm group-focus-within:text-primary"
+              className="absolute right-3 top-3.5 material-symbols-outlined text-outline text-sm group-focus-within:text-primary"
               data-icon="mail"
-            ></span>
+             />
           </div>
         </div>
-        <div class="space-y-1.5">
+        <div className="space-y-1.5">
           <label
-            class="text-sm font-semibold text-on-surface-variant px-1"
-            for="password"
+            className="text-sm font-semibold text-on-surface-variant px-1"
+            htmlFor="password"
           >
             Contraseña
           </label>
-          <div class="relative group">
+          <div className="relative group">
             <input
-              class="w-full px-4 py-3 rounded-lg bg-surface-container-lowest border-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary transition-all placeholder:text-outline outline-none"
+              className="w-full px-4 py-3 rounded-lg bg-surface-container-lowest border-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary transition-all placeholder:text-outline outline-none"
               id="password"
               name="password"
               placeholder="••••••••"
               type="password"
             />
             <span
-              class="absolute right-3 top-3.5 material-symbols-outlined text-outline text-sm group-focus-within:text-primary"
+              className="absolute right-3 top-3.5 material-symbols-outlined text-outline text-sm group-focus-within:text-primary"
               data-icon="lock"
-            ></span>
+             />
           </div>
         </div>
-        <div class="space-y-1.5">
+        <div className="space-y-1.5">
           <label
-            class="text-sm font-semibold text-on-surface-variant px-1"
-            for="confirm_password"
+            className="text-sm font-semibold text-on-surface-variant px-1"
+            htmlFor="confirm_password"
           >
             Confirmar Contraseña
           </label>
-          <div class="relative group">
+          <div className="relative group">
             <input
-              class="w-full px-4 py-3 rounded-lg bg-surface-container-lowest border-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-error transition-all placeholder:text-outline outline-none"
+              className="w-full px-4 py-3 rounded-lg bg-surface-container-lowest border-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-error transition-all placeholder:text-outline outline-none"
               id="confirm_password"
               name="confirm_password"
               placeholder="••••••••"
               type="password"
             />
             <span
-              class="absolute right-3 top-3.5 material-symbols-outlined text-error text-sm"
+              className="absolute right-3 top-3.5 material-symbols-outlined text-error text-sm"
               data-icon="error_outline"
-            ></span>
+             />
           </div>
-          <p class="text-[11px] text-error px-1">
+          <p className="text-[11px] text-error px-1">
             Las contraseñas no coinciden.
           </p>
         </div>
