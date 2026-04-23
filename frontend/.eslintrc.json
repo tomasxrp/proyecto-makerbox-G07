@@ -3,15 +3,18 @@
     "browser": true,
     "es2021": true
   },
-  "extends": [
-    "airbnb",
-    "airbnb/hooks",
-    "prettier"
-  ],
+  "extends": ["airbnb", "airbnb/hooks", "plugin:prettier/recommended"],
   "rules": {
     "camelcase": "error",
     "react/react-in-jsx-scope": "off",
     "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }],
     "react/prop-types": "warn"
+  },
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [".js", ".jsx"]
+      }
+    }
   }
 }
