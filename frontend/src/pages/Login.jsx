@@ -1,20 +1,49 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const response = await axios.post(
+        'http://localhost:3000/api/usuarios/login',
+        {
+          correo: email,
+          contrasena: password,
+        }
+      );
+
+      const { data } = response;
+      // guardar token
+      localStorage.setItem('token', data.resultadoLogin.token);
+
+      // guardar usuario
+      localStorage.setItem(
+        'usuario',
+        JSON.stringify(data.resultadoLogin.usuario)
+      );
+
+      // redirigir
       navigate('/home');
-    }, 1000);
+    } catch (error) {
+      setErrorMsg(
+        (error.response &&
+          error.response.data &&
+          error.response.data.mensaje) ||
+          'Error al iniciar sesión'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
   return (
     <main className="flex min-h-screen bg-background">
@@ -83,6 +112,7 @@ export default function Login() {
               {loading ? 'Cargando...' : 'Acceder'}
             </button>
           </form>
+          {errorMsg && <p className="text-red-500 text-sm mt-2">{errorMsg}</p>}
           <p className="mt-6 text-center text-sm text-on-surface-variant">
             ¿No tienes cuenta?{' '}
             <Link
