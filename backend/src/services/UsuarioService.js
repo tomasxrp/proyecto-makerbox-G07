@@ -116,8 +116,52 @@ const eliminarUsuario = async (usuario, correoEliminar) => {
   };
 };
 
+const obtenerUsuarioPorCorreo = async (correo, usuario) => {
+  if (usuario.rol !== 'ADMINISTRADOR') {
+    throw new Error('El usuario no tiene los permisos necesarios');
+  }
+
+  const usuarioEncontrado = await prisma.usuario.findUnique({
+    where: {
+      correo,
+    },
+  });
+
+  if (!usuarioEncontrado) {
+    throw new Error('El correo no existe en la base de datos');
+  }
+
+  return {
+    rut: usuarioEncontrado.rut,
+    nombre: usuarioEncontrado.nombre,
+    apellido: usuarioEncontrado.apellido,
+    correo: usuarioEncontrado.correo,
+    rol: usuarioEncontrado.usuarioRol,
+  };
+};
+
+const ObtenerListaUsuarios = async (usuario) => {
+  if (usuario.rol !== 'ADMINISTRADOR') {
+    throw new Error('El usuario no tiene los permisos necesarios');
+  }
+
+  const listaUsuarios = await prisma.usuario.findMany({
+    select: {
+      rut: true,
+      nombre: true,
+      apellido: true,
+      correo: true,
+      usuarioRol: true,
+    },
+  });
+
+  return listaUsuarios;
+};
+
 module.exports = {
   registrarUsuario,
   loginUsuario,
   eliminarUsuario,
+  obtenerUsuarioPorCorreo,
+  ObtenerListaUsuarios,
 };
