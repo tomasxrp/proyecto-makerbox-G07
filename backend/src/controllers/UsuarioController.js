@@ -18,7 +18,9 @@ const registrarUsuario = async (req, res) => {
       usuario: nuevoUsuario,
     });
   } catch (error) {
-    console.error('Error al registrar usuario:', error);
+    process.stderr.write(
+      `Error al registrar usuario: ${error.message || error}\n`
+    );
     res.status(400).json({
       mensaje: error.message || 'Error al registrar usuario',
     });
@@ -39,7 +41,9 @@ const loginUsuario = async (req, res) => {
       resultadoLogin,
     });
   } catch (error) {
-    console.error('Error al iniciar sesión:', error);
+    process.stderr.write(
+      `Error al iniciar sesión: ${error.message || error}\n`
+    );
     res.status(401).json({
       mensaje: error.message || 'Error al iniciar sesión',
     });

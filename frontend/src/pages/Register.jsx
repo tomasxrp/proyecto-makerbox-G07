@@ -27,19 +27,16 @@ export default function Register() {
       !form.contraseña ||
       !form.confirmoContraseña
     ) {
-      alert('Completa todos los campos');
       return;
     }
 
     if (form.contraseña !== form.confirmoContraseña) {
-      alert('Las contraseñas no coinciden');
       return;
     }
 
     setLoading(true);
 
     setTimeout(() => {
-      console.log('Usuario registrado:', form);
       setLoading(false);
     }, 1500);
   };
@@ -48,97 +45,82 @@ export default function Register() {
     <main className="flex min-h-screen items-center justify-center bg-background">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md bg-surface p-6 rounded shadow"
+        className="w-full max-w-md bg-surface p-6 rounded shadow space-y-4"
       >
         <h1 className="text-2xl font-bold mb-4">Registro</h1>
 
+        {/* NOMBRE */}
         <div className="space-y-1.5">
           <label
-            className="text-sm font-semibold text-on-surface-variant px-1"
-            htmlFor="full_name"
+            htmlFor="nombreCompleto"
+            className="block text-sm font-semibold"
           >
             Nombre Completo
-          </label>
-          <div className="relative group">
             <input
-              className="w-full px-4 py-3 rounded-lg bg-surface-container-lowest border-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary transition-all placeholder:text-outline outline-none"
-              id="full_name"
-              name="full_name"
-              placeholder="Ej. Dr. Javier Soler"
+              id="nombreCompleto"
+              name="nombreCompleto"
               type="text"
+              value={form.nombreCompleto}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-lg border"
+              required
             />
-            <span className="absolute right-3 top-3.5 material-symbols-outlined text-outline text-sm group-focus-within:text-primary" />
-          </div>
+          </label>
         </div>
 
+        {/* EMAIL */}
         <div className="space-y-1.5">
-          <label
-            className="text-sm font-semibold text-on-surface-variant px-1"
-            htmlFor="email"
-          >
+          <label htmlFor="correo" className="block text-sm font-semibold">
             Correo Electrónico
-          </label>
-          <div className="relative group">
             <input
-              className="w-full px-4 py-3 rounded-lg bg-surface-container-lowest border-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary transition-all placeholder:text-outline outline-none"
-              id="email"
-              name="email"
-              placeholder="usuario@institucion.edu"
+              id="correo"
+              name="correo"
               type="email"
+              value={form.correo}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-lg border"
+              required
             />
-            <span
-              className="absolute right-3 top-3.5 material-symbols-outlined text-outline text-sm group-focus-within:text-primary"
-              data-icon="mail"
-             />
-          </div>
-        </div>
-        <div className="space-y-1.5">
-          <label
-            className="text-sm font-semibold text-on-surface-variant px-1"
-            htmlFor="password"
-          >
-            Contraseña
           </label>
-          <div className="relative group">
-            <input
-              className="w-full px-4 py-3 rounded-lg bg-surface-container-lowest border-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary transition-all placeholder:text-outline outline-none"
-              id="password"
-              name="password"
-              placeholder="••••••••"
-              type="password"
-            />
-            <span
-              className="absolute right-3 top-3.5 material-symbols-outlined text-outline text-sm group-focus-within:text-primary"
-              data-icon="lock"
-             />
-          </div>
         </div>
+
+        {/* PASSWORD */}
+        <div className="space-y-1.5">
+          <label htmlFor="contraseña" className="block text-sm font-semibold">
+            Contraseña
+            <input
+              id="contraseña"
+              name="contraseña"
+              type="password"
+              value={form.contraseña}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-lg border"
+              required
+            />
+          </label>
+        </div>
+
+        {/* CONFIRM PASSWORD */}
         <div className="space-y-1.5">
           <label
-            className="text-sm font-semibold text-on-surface-variant px-1"
-            htmlFor="confirm_password"
+            htmlFor="confirmoContraseña"
+            className="block text-sm font-semibold"
           >
             Confirmar Contraseña
-          </label>
-          <div className="relative group">
             <input
-              className="w-full px-4 py-3 rounded-lg bg-surface-container-lowest border-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-error transition-all placeholder:text-outline outline-none"
-              id="confirm_password"
-              name="confirm_password"
-              placeholder="••••••••"
+              id="confirmoContraseña"
+              name="confirmoContraseña"
               type="password"
+              value={form.confirmoContraseña}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-lg border"
+              required
             />
-            <span
-              className="absolute right-3 top-3.5 material-symbols-outlined text-error text-sm"
-              data-icon="error_outline"
-             />
-          </div>
-          <p className="text-[11px] text-error px-1">
-            Las contraseñas no coinciden.
-          </p>
+          </label>
         </div>
 
         <button
+          type="submit"
           disabled={loading}
           className={`w-full p-3 rounded text-white ${
             loading ? 'bg-gray-400' : 'bg-primary'
@@ -146,12 +128,10 @@ export default function Register() {
         >
           {loading ? 'Registrando...' : 'Crear cuenta'}
         </button>
-        <p className="mt-6 text-center text-sm text-on-surface-variant">
+
+        <p className="text-center text-sm">
           ¿Ya tienes cuenta?{' '}
-          <Link
-            to="/login"
-            className="text-primary font-bold hover:underline transition"
-          >
+          <Link to="/login" className="text-primary font-bold">
             Inicia sesión
           </Link>
         </p>

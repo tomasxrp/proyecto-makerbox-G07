@@ -1,9 +1,49 @@
 import { useState } from 'react';
-import { Link , useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
+const API_URL = 'http://localhost:3000';
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const response = await axios.post(`${API_URL}/api/usuarios/login`, {
+        correo: email,
+        contrasena: password,
+      });
+
+      const { data } = response;
+      // guardar token
+      localStorage.setItem('token', data.resultadoLogin.token);
+
+      // guardar usuario
+      localStorage.setItem(
+        'usuario',
+        JSON.stringify(data.resultadoLogin.usuario)
+      );
+
+      // redirigir
+      navigate('/home');
+    } catch (error) {
+      setErrorMsg(
+        (error.response &&
+          error.response.data &&
+          error.response.data.mensaje) ||
+          'Error al iniciar sesión'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <main className="flex min-h-screen bg-background">
       {/* IZQUIERDA */}
@@ -20,56 +60,58 @@ export default function Login() {
             Iniciar sesión
           </h1>
 
-          <div className="space-y-2">
-            <label
-              className="text-sm font-semibold text-on-surface-variant flex items-center gap-2"
-              htmlFor="email"
-            >
-              Correo electrónico
-            </label>
-            <div className="relative">
-              <input
-                className="w-full px-4 py-3 bg-surface-container-lowest border border-outline-variant/20 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-outline text-on-surface"
-                id="email"
-                placeholder="usuario@universidad.edu"
-                required=""
-                type="email"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
               <label
-                className="text-sm font-semibold text-on-surface-variant flex items-center gap-2"
-                htmlFor="password"
+                htmlFor="email"
+                className="space-y-2 block text-sm font-semibold text-on-surface-variant"
               >
-                Contraseña
+                Correo electrónico
+                <input
+                  id="email"
+                  type="email"
+                  className="w-full px-4 py-3 bg-surface-container-lowest border
+                  border-outline-variant/20 rounded-xl focus:ring-2
+                focus:ring-primary focus:border-primary outline-none
+                  transition-all placeholder:text-outline text-on-surface"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
               </label>
             </div>
-            <div className="relative">
-              <input
-                className="w-full px-4 py-3 bg-surface-container-lowest border border-outline-variant/20 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-outline text-on-surface pr-12"
-                id="password"
-                placeholder="••••••••"
-                required=""
-                type="password"
-              />
-              <button
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors"
-                type="button"
-               />
-            </div>
-          </div>
 
-          <button
-            disabled={loading}
-            className={`w-full p-3 rounded text-white ${
-              loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary'
-            }`}
-          >
-            {loading ? 'Cargando...' : 'Acceder'}
-          </button>
+            <div className="space-y-2">
+              <label
+                htmlFor="password"
+                className="space-y-2 block text-sm font-semibold text-on-surface-variant"
+              >
+                Contraseña
+                <input
+                  id="password"
+                  type="password"
+                  className="w-full px-4 py-3 bg-surface-container-lowest border
+                  border-outline-variant/20 rounded-xl focus:ring-2
+                focus:ring-primary focus:border-primary outline-none
+                  transition-all placeholder:text-outline text-on-surface pr-12"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full p-3 rounded text-white ${
+                loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary'
+              }`}
+            >
+              {loading ? 'Cargando...' : 'Acceder'}
+            </button>
+          </form>
+          {errorMsg && <p className="text-red-500 text-sm mt-2">{errorMsg}</p>}
           <p className="mt-6 text-center text-sm text-on-surface-variant">
             ¿No tienes cuenta?{' '}
             <Link

@@ -1,8 +1,8 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const usuarioRoutes = require('./routes/UsuarioRoutes');
 const semestreRoutes = require('./routes/SemestreRoutes');
-require('dotenv').config();
 
 const app = express();
 // Se define el puerto que se usara, si no se define se usara el puerto 3000
@@ -18,5 +18,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Servidor escuchando en el puerto ${PORT}`);
+  process.stdout.write(`Servidor escuchando en el puerto ${PORT}\n`);
 });

@@ -21,13 +21,13 @@ export default function AdminView() {
 
       {/* ACCIONES */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <button className="bg-primary text-white p-4 rounded">
+        <button type="button" className="bg-primary text-white p-4 rounded">
           Gestionar usuarios
         </button>
-        <button className="bg-primary text-white p-4 rounded">
+        <button type="button" className="bg-primary text-white p-4 rounded">
           Ver proyectos
         </button>
-        <button className="bg-primary text-white p-4 rounded">
+        <button type="button" className="bg-primary text-white p-4 rounded">
           Impresiones
         </button>
       </section>
