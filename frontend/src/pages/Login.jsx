@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+const API_URL = 'http://localhost:3000';
+
 export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -14,13 +16,10 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await axios.post(
-        'http://localhost:3000/api/usuarios/login',
-        {
-          correo: email,
-          contrasena: password,
-        }
-      );
+      const response = await axios.post(`${API_URL}/api/usuarios/login`, {
+        correo: email,
+        contrasena: password,
+      });
 
       const { data } = response;
       // guardar token
