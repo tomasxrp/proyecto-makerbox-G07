@@ -24,6 +24,27 @@ const crearSemestre = async (req, res) => {
   }
 };
 
+const eliminarSemestre = async (req, res) => {
+  try {
+    const { semestreId } = req.params;
+    const { usuario } = req;
+
+    const semestreEliminado = await semestreService.eliminarSemestre(
+      usuario,
+      semestreId
+    );
+
+    res.status(200).json({
+      semestreEliminado,
+    });
+  } catch (error) {
+    res.status(401).json({
+      mensaje: error.message || 'Error al eliminar el semestre',
+    });
+  }
+};
+
 module.exports = {
   crearSemestre,
+  eliminarSemestre,
 };
