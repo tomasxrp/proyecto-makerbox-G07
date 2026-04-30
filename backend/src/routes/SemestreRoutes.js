@@ -12,5 +12,10 @@ router.post(
   validarSemestre,
   semestreController.crearSemestre
 );
+router.delete(
+  '/eliminar/:semestreId',
+  validarToken,
+  semestreController.eliminarSemestre
+);
 
 module.exports = router;
