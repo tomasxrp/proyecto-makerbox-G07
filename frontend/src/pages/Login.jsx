@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
