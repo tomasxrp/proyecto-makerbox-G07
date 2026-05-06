@@ -25,13 +25,7 @@ const validarRegistro = (req, res, next) => {
   }
 
   // Se valida que el rol entregado sea uno de los roles validos
-  const rolesValidos = [
-    'ADMINISTRADOR',
-    'PROFESOR',
-    'AYUDANTE',
-    'ESTUDIANTE',
-    'SOLICITANTE',
-  ];
+  const rolesValidos = ['ESTUDIANTE', 'SOLICITANTE'];
   if (!rolesValidos.includes(rol)) {
     return res.status(400).json({ mensaje: 'Rol no es valido' });
   }

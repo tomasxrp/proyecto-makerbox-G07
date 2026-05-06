@@ -3,6 +3,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Home from './pages/Home';
 import MainLayout from './layouts/MainLayout';
+import MisImpresiones from './pages/MisImpresiones';
+import UsuariosAdmin from './pages/UsuariosAdmin';
 
 function App() {
   return (
@@ -15,6 +17,22 @@ function App() {
         element={
           <MainLayout>
             <Home />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/mis-impresiones"
+        element={
+          <MainLayout>
+            <MisImpresiones />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/usuarios"
+        element={
+          <MainLayout>
+            <UsuariosAdmin />
           </MainLayout>
         }
       />

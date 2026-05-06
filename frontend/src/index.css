@@ -4,6 +4,7 @@
   --color-primary: #0b193c;
   --color-primary-container: #222e52;
   --color-secondary: #006b5c;
+  --color-sidebar: #12264d;
 
   --color-background: #f8f9fb;
   --color-surface: #f8f9fb;
@@ -15,4 +16,17 @@
   --color-surface-container-lowest: #ffffff;
 
   --color-outline: #767683;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
 }

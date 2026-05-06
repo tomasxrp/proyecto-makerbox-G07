@@ -50,6 +50,43 @@ const loginUsuario = async (req, res) => {
   }
 };
 
+const crearUsuario = async (req, res) => {
+  try {
+    const { usuario } = req;
+    const nuevoUsuario = await usuarioService.crearUsuario(usuario, req.body);
+
+    res.status(201).json({
+      mensaje: 'Usuario creado exitosamente',
+      usuario: nuevoUsuario,
+    });
+  } catch (error) {
+    res.status(400).json({
+      mensaje: error.message || 'Error al crear usuario',
+    });
+  }
+};
+
+const actualizarUsuario = async (req, res) => {
+  try {
+    const { usuario } = req;
+    const { correo } = req.params;
+    const usuarioActualizado = await usuarioService.actualizarUsuario(
+      usuario,
+      correo,
+      req.body
+    );
+
+    res.status(200).json({
+      mensaje: 'Usuario actualizado exitosamente',
+      usuario: usuarioActualizado,
+    });
+  } catch (error) {
+    res.status(400).json({
+      mensaje: error.message || 'Error al actualizar usuario',
+    });
+  }
+};
+
 const eliminarUsuario = async (req, res) => {
   try {
     const { correo } = req.params;
@@ -111,6 +148,8 @@ const ObtenerListaUsuarios = async (req, res) => {
 
 module.exports = {
   registrarUsuario,
+  crearUsuario,
+  actualizarUsuario,
   loginUsuario,
   eliminarUsuario,
   obtenerUsuarioPorCorreo,
