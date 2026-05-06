@@ -16,5 +16,9 @@
         "extensions": [".js", ".jsx"]
       }
     }
+  },
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
   }
 }
