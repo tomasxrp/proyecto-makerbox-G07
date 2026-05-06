@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 
 export default function Navbar({ onToggleSidebar }) {
@@ -51,3 +52,11 @@ export default function Navbar({ onToggleSidebar }) {
     </header>
   );
 }
+
+Navbar.propTypes = {
+  onToggleSidebar: PropTypes.func,
+};
+
+Navbar.defaultProps = {
+  onToggleSidebar: () => {},
+};

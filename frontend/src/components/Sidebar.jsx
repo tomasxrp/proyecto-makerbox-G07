@@ -52,15 +52,13 @@ export default function Sidebar({ isOpen, onClose }) {
           </Link>
 
           {isAdmin && (
-            <>
-              <Link
-                to="/reportes"
-                onClick={onClose}
-                className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
-              >
-                📊 Reportes
-              </Link>
-            </>
+            <Link
+              to="/reportes"
+              onClick={onClose}
+              className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
+            >
+              📊 Reportes
+            </Link>
           )}
 
           {isProfessor && (
@@ -83,15 +81,13 @@ export default function Sidebar({ isOpen, onClose }) {
           )}
 
           {isStudent && (
-            <>
-              <Link
-                to="/mis-proyectos"
-                onClick={onClose}
-                className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
-              >
-                📦 Mis Proyectos
-              </Link>
-            </>
+            <Link
+              to="/mis-proyectos"
+              onClick={onClose}
+              className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
+            >
+              📦 Mis Proyectos
+            </Link>
           )}
         </nav>
 
