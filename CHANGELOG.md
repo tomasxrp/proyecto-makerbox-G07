@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/tomasxrp/proyecto-makerbox-G07/compare/v1.0.0...v1.0.1) (2026-05-06)
+
+
+### Bug Fixes
+
+* Configuración ESLint para soportar import.meta ([42a4113](https://github.com/tomasxrp/proyecto-makerbox-G07/commit/42a41132e77aee4ba1eabb29c8d35d4f9438a10c))
+* Configuración ESLint para soportar import.meta ([ff2bcd0](https://github.com/tomasxrp/proyecto-makerbox-G07/commit/ff2bcd0ea8c00f9f1e729e1aa79021740d198344))
+
 ## 1.0.0 (2026-04-30)
 
 
