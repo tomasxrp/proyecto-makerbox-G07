@@ -54,13 +54,6 @@ export default function Sidebar({ isOpen, onClose }) {
           {isAdmin && (
             <>
               <Link
-                to="/usuarios"
-                onClick={onClose}
-                className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
-              >
-                👥 Usuarios
-              </Link>
-              <Link
                 to="/reportes"
                 onClick={onClose}
                 className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
@@ -97,13 +90,6 @@ export default function Sidebar({ isOpen, onClose }) {
                 className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
               >
                 📦 Mis Proyectos
-              </Link>
-              <Link
-                to="/mis-impresiones"
-                onClick={onClose}
-                className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
-              >
-                🖨️ Mis Impresiones
               </Link>
             </>
           )}

@@ -4,14 +4,6 @@ const jwt = require('jsonwebtoken');
 
 const prisma = new PrismaClient();
 
-const rolesPermitidos = [
-  'ADMINISTRADOR',
-  'PROFESOR',
-  'AYUDANTE',
-  'ESTUDIANTE',
-  'SOLICITANTE',
-];
-
 const registrarUsuario = async (
   rut,
   nombre,
@@ -56,122 +48,6 @@ const registrarUsuario = async (
   };
 
   return response;
-};
-
-const crearUsuario = async (usuarioCreador, datosUsuario) => {
-  if (!rolesPermitidos.includes(datosUsuario.rol)) {
-    throw new Error('El rol no es valido');
-  }
-
-  const usuarioExistente = await prisma.usuario.findUnique({
-    where: {
-      correo: datosUsuario.correo,
-    },
-  });
-
-  if (usuarioExistente) {
-    throw new Error('El correo ya está registrado');
-  }
-
-  if (usuarioCreador.rol === 'PROFESOR' && datosUsuario.rol !== 'AYUDANTE') {
-    throw new Error('El profesor solo puede crear ayudantes');
-  }
-
-  if (
-    usuarioCreador.rol !== 'ADMINISTRADOR' &&
-    usuarioCreador.rol !== 'PROFESOR'
-  ) {
-    throw new Error('El usuario no tiene permisos para crear usuarios');
-  }
-
-  const salt = await bcrypt.genSalt(10);
-  const contrasenaEncriptada = await bcrypt.hash(datosUsuario.contrasena, salt);
-
-  const nuevoUsuario = await prisma.usuario.create({
-    data: {
-      rut: datosUsuario.rut,
-      nombre: datosUsuario.nombre,
-      apellido: datosUsuario.apellido,
-      correo: datosUsuario.correo,
-      passUsuario: contrasenaEncriptada,
-      usuarioRol: datosUsuario.rol,
-    },
-  });
-
-  return {
-    rut: nuevoUsuario.rut,
-    nombre: nuevoUsuario.nombre,
-    apellido: nuevoUsuario.apellido,
-    email: nuevoUsuario.correo,
-    rol: nuevoUsuario.usuarioRol,
-  };
-};
-
-const actualizarUsuario = async (
-  usuarioCreador,
-  correoAnterior,
-  datosUsuario
-) => {
-  if (usuarioCreador.rol !== 'ADMINISTRADOR') {
-    throw new Error('El usuario no tiene permisos para actualizar usuarios');
-  }
-
-  const usuarioEncontrado = await prisma.usuario.findUnique({
-    where: {
-      correo: correoAnterior,
-    },
-  });
-
-  if (!usuarioEncontrado) {
-    throw new Error('El correo no existe en la base de datos');
-  }
-
-  if (datosUsuario.correo && datosUsuario.correo !== correoAnterior) {
-    const correoRepetido = await prisma.usuario.findUnique({
-      where: {
-        correo: datosUsuario.correo,
-      },
-    });
-
-    if (correoRepetido) {
-      throw new Error('El nuevo correo ya está registrado');
-    }
-  }
-
-  if (datosUsuario.rol && !rolesPermitidos.includes(datosUsuario.rol)) {
-    throw new Error('El rol no es valido');
-  }
-
-  const dataActualizacion = {
-    rut: datosUsuario.rut || usuarioEncontrado.rut,
-    nombre: datosUsuario.nombre || usuarioEncontrado.nombre,
-    apellido: datosUsuario.apellido || usuarioEncontrado.apellido,
-    correo: datosUsuario.correo || usuarioEncontrado.correo,
-    usuarioRol: datosUsuario.rol || usuarioEncontrado.usuarioRol,
-  };
-
-  if (datosUsuario.contrasena) {
-    const salt = await bcrypt.genSalt(10);
-    dataActualizacion.passUsuario = await bcrypt.hash(
-      datosUsuario.contrasena,
-      salt
-    );
-  }
-
-  const usuarioActualizado = await prisma.usuario.update({
-    where: {
-      correo: correoAnterior,
-    },
-    data: dataActualizacion,
-  });
-
-  return {
-    rut: usuarioActualizado.rut,
-    nombre: usuarioActualizado.nombre,
-    apellido: usuarioActualizado.apellido,
-    email: usuarioActualizado.correo,
-    rol: usuarioActualizado.usuarioRol,
-  };
 };
 
 const loginUsuario = async (correo, contrasena) => {
@@ -284,8 +160,6 @@ const ObtenerListaUsuarios = async (usuario) => {
 
 module.exports = {
   registrarUsuario,
-  crearUsuario,
-  actualizarUsuario,
   loginUsuario,
   eliminarUsuario,
   obtenerUsuarioPorCorreo,
