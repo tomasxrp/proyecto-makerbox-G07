@@ -44,7 +44,36 @@ const eliminarSemestre = async (req, res) => {
   }
 };
 
+const obtenerSemestres = async (req, res) => {
+  try {
+    const semestres = await semestreService.obtenerSemestres();
+    res.status(200).json({
+      semestres,
+    });
+  } catch (error) {
+    res.status(401).json({
+      mensaje: error.message || 'Error al obtener los semestres',
+    });
+  }
+};
+
+const obtenerSemestrePorId = async (req, res) => {
+  try {
+    const { semestreId } = req.params;
+    const semestre = await semestreService.obtenerSemestrePorId(semestreId);
+    res.status(200).json({
+      semestre,
+    });
+  } catch (error) {
+    res.status(401).json({
+      mensaje: error.message || 'Error al obtener el semestre',
+    });
+  }
+};
+
 module.exports = {
   crearSemestre,
   eliminarSemestre,
+  obtenerSemestres,
+  obtenerSemestrePorId,
 };
