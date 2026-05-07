@@ -60,7 +60,38 @@ const eliminarSemestre = async (usuario, semestreId) => {
   };
 };
 
+const obtenerTodosLosSemestres = async () => {
+  const semestres = await prisma.semestre.findMany({
+    select: {
+      id: true,
+      anio: true,
+      periodo: true,
+      fechaInicio: true,
+      fechaFin: true,
+      estado: true,
+    },
+  });
+
+  return semestres;
+};
+
+const obtenerSemestrePorId = async (semestreId) => {
+  const semestre = await prisma.semestre.findUnique({
+    where: {
+      id: semestreId,
+    },
+  });
+
+  if (!semestre) {
+    throw new Error('El semestre no existe en la base de datos');
+  }
+
+  return semestre;
+};
+
 module.exports = {
   crearSemestre,
   eliminarSemestre,
+  obtenerTodosLosSemestres,
+  obtenerSemestrePorId,
 };
