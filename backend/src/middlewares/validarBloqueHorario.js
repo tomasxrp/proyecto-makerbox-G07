@@ -24,7 +24,7 @@ const validarBloqueHorario = (req, res, next) => {
         .json({ mensaje: 'Formato de hora debe ser HH:MM'});
     }
 
-    return next;
+    return next();
 };
 
 module.exports = {

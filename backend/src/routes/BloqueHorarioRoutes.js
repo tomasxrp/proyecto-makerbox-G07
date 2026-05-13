@@ -11,3 +11,5 @@ router.post(
     validarBloqueHorario,
     bloqueHorarioController.crearBloqueHorario
 );
+
+module.exports = router;
