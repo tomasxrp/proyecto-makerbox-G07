@@ -1,4 +1,3 @@
-// tests/services/SemestreService.test.js
 const mockPrisma = require('../prismaMock');
 const semestreService = require('../../src/services/SemestreService');
 
