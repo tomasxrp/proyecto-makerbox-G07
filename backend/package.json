@@ -8,6 +8,7 @@
     "dev": "nodemon src/index.js",
     "lint": "eslint src",
     "test": "jest",
+    "test:coverage": "jest --coverage --collectCoverageFrom='src/**/*.js'",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio"
@@ -29,8 +30,10 @@
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
+    "jest": "^30.4.2",
     "nodemon": "^3.1.14",
     "prettier": "^3.8.1",
-    "prisma": "^6.19.3"
+    "prisma": "^6.19.3",
+    "supertest": "^7.2.2"
   }
 }
