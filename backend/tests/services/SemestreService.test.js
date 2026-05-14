@@ -8,7 +8,7 @@ describe('SemestreService', () => {
   });
 
   describe('crearSemestre', () => {
-    it('Debería lanzar un error si el usuario no es ADMINISTRADOR', async () => {
+    it('Debería lanzar un error si el usuario no es ADMINISTRADOR...', async () => {
       const usuarioInvalido = { rol: 'ESTUDIANTE' };
 
       await expect(
