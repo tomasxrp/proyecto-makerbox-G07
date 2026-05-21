@@ -40,6 +40,12 @@ const validarSemestre = (req, res, next) => {
     });
   }
 
+  if (periodo !== 1 && periodo !== 2) {
+    res.status(400).json({
+      mensaje: 'El periodo debe ser 1 o 2',
+    });
+  }
+
   return next();
 };
 
