@@ -34,6 +34,12 @@ const validarSemestre = (req, res, next) => {
     }
   }
 
+  if (new Date(fechaInicio) >= new Date(fechaFin)) {
+    return res.status(400).json({
+      mensaje: 'La fecha de inicio no puede ser mayor a la fecha fin',
+    });
+  }
+
   return next();
 };
 
