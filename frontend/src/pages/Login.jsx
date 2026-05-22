@@ -39,6 +39,7 @@ export default function Login() {
         'usuario',
         JSON.stringify(data.resultadoLogin.usuario)
       );
+      localStorage.setItem('ultimoAcceso', new Date().toISOString());
 
       const { rol } = data.resultadoLogin.usuario;
 
