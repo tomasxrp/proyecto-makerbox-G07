@@ -64,7 +64,7 @@ describe('UsuarioService', () => {
 
       await expect(
         usuarioService.loginUsuario('noexiste@utalca.cl', 'pass')
-      ).rejects.toThrow('Correo no registrado');
+      ).rejects.toThrow('Correo o contraseña incorrectos');
     });
 
     it('Debería retornar un token si las credenciales son correctas', async () => {

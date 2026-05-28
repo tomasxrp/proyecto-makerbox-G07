@@ -17,9 +17,9 @@ describe('Middleware: validarToken', () => {
     next = jest.fn();
   });
 
-  it('Debería retornar 400 si no hay token en headers', () => {
+  it('Debería retornar 401 si no hay token en headers', () => {
     validarToken(req, res, next);
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith({
       mensaje: 'Token no proporcionado',
     });
