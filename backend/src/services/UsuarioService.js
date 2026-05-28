@@ -58,7 +58,7 @@ const loginUsuario = async (correo, contrasena) => {
     },
   });
   if (!usuarioObtenido) {
-    throw new Error('Correo no registrado');
+    throw new Error('Correo o contraseña incorrectos');
   }
 
   // verificar si la contrasena es correcta
@@ -67,7 +67,7 @@ const loginUsuario = async (correo, contrasena) => {
     usuarioObtenido.passUsuario
   );
   if (!contrasenaValida) {
-    throw new Error('Contraseña incorrecta');
+    throw new Error('Correo o contraseña incorrectos');
   }
 
   const payloadJWT = {

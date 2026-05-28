@@ -7,8 +7,8 @@
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "lint": "eslint src",
-    "test": "jest",
-    "test:coverage": "jest --coverage --collectCoverageFrom='src/**/*.js'",
+    "test": "NODE_ENV=test jest",
+    "test:coverage": "NODE_ENV=test jest --coverage --collectCoverageFrom='src/**/*.js'",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio"

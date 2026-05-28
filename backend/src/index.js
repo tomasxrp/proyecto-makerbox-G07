@@ -17,6 +17,10 @@ app.get('/', (req, res) => {
   res.send('Peticion GET recibida en el backend');
 });
 
-app.listen(PORT, () => {
-  process.stdout.write(`Servidor escuchando en el puerto ${PORT}\n`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    process.stdout.write(`Servidor escuchando en el puerto ${PORT}\n`);
+  });
+}
+
+module.exports = app;
