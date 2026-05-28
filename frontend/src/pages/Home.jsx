@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminView from '../components/dashboard/AdminView';
 import ProfesorView from '../components/dashboard/ProfesorView';
