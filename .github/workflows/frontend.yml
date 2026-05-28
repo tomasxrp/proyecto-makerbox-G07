@@ -12,6 +12,11 @@ jobs:
   validar-frontend:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+
     defaults:
       run:
         working-directory: ./frontend
@@ -33,5 +38,23 @@ jobs:
       - name: Ejecutar Linter (Airbnb + Prettier)
         run: npm run lint
 
+      - name: Ejecutar pruebas de integración y cobertura
+        run: npm run test:coverage
+
       - name: Validar compilación (Build)
         run: npm run build
+
+      - name: Subir cobertura a Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./frontend/coverage/lcov.info
+          flags: frontend
+          slug: tomasxrp/proyecto-makerbox-G07
+          fail_ci_if_error: true
+
+      - name: Guardar reporte de cobertura
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage
