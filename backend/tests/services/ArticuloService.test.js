@@ -64,3 +64,66 @@ describe('Prueba para obtener un articulo por ID', () => {
     expect(resultadoObtenido.id).toBe(1);
   });
 });
+
+describe('Prueba para actualizar un articulo', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('Debería arrojar un error si el usuario no es ADMINISTRADOR', async () => {
+    const usuarioEstudiante = { rol: 'ESTUDIANTE' };
+
+    await expect(
+      articuloService.actualizarArticulo(usuarioEstudiante, 1, {
+        nombreArticulo: 'Nuevo Nombre',
+      })
+    ).rejects.toThrow('Usuario no tiene los permisos necesarios.');
+  });
+
+  it('Debe arrojar un error si el articulo no existe', async () => {
+    const usuarioAdmin = { rol: 'ADMINISTRADOR' };
+
+    mockPrisma.articulo.findUnique.mockResolvedValue(null);
+
+    await expect(
+      articuloService.actualizarArticulo(usuarioAdmin, 999, {
+        nombreArticulo: 'Nuevo Nombre',
+      })
+    ).rejects.toThrow('El artículo no existe en la base de datos');
+  });
+
+  it('Debe actualizar el articulo con exito', async () => {
+    const usuarioAdmin = { rol: 'ADMINISTRADOR' };
+    const datosActualizar = {
+      nombreArticulo: 'Articulo Actualizado',
+      stockActual: 50,
+    };
+
+    const mockArticuloExistente = {
+      id: 1,
+      nombreArticulo: 'Articulo Viejo',
+      stockActual: 10,
+    };
+    const mockArticuloActualizado = { id: 1, ...datosActualizar };
+    mockPrisma.articulo.findUnique.mockResolvedValue(mockArticuloExistente);
+    mockPrisma.articulo.update.mockResolvedValue(mockArticuloActualizado);
+
+    const resultado = await articuloService.actualizarArticulo(
+      usuarioAdmin,
+      1,
+      datosActualizar
+    );
+
+    expect(mockPrisma.articulo.update).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.articulo.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: datosActualizar,
+    });
+
+    expect(resultado.mensaje).toBe('Artículo actualizado con éxito');
+    expect(resultado.articuloActualizado.nombreArticulo).toBe(
+      'Articulo Actualizado'
+    );
+    expect(resultado.articuloActualizado.stockActual).toBe(50);
+  });
+});
