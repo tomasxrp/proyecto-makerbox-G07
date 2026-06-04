@@ -56,8 +56,23 @@ const obtenerArticulos = async () => {
   return articulos;
 };
 
+const obtenerArticuloPorId = async (articuloId) => {
+  const articuloEncontrado = await prisma.articulo.findUnique({
+    where: {
+      id: Number(articuloId),
+    },
+  });
+
+  if (!articuloEncontrado) {
+    throw new Error('El articulo no existe en la base de datos');
+  }
+
+  return articuloEncontrado;
+};
+
 module.exports = {
   crearArticulo,
   eliminarArticulo,
   obtenerArticulos,
+  obtenerArticuloPorId,
 };
