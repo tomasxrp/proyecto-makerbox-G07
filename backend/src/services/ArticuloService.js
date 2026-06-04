@@ -51,7 +51,13 @@ const eliminarArticulo = async (usuario, articuloId) => {
   return articuloEliminado;
 };
 
+const obtenerArticulos = async () => {
+  const articulos = await prisma.articulo.findMany();
+  return articulos;
+};
+
 module.exports = {
   crearArticulo,
   eliminarArticulo,
+  obtenerArticulos,
 };

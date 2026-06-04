@@ -1,5 +1,5 @@
-const articuloService = require('../../src/services/ArticuloService');
 const mockPrisma = require('../prismaMock');
+const articuloService = require('../../src/services/ArticuloService');
 
 describe('Prueba para obtener todos los articulos', () => {
   beforeEach(() => {
