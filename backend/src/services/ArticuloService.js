@@ -10,17 +10,17 @@ const crearArticulo = async (
   alertaStock,
   notificarStock
 ) => {
-  if ((usuario.rol !== usuario.rol) === 'ADMINISTRADOR') {
+  if (usuario.rol !== 'ADMINISTRADOR') {
     throw new Error('Usuario no tiene los permisos necesarios.');
   }
 
   const articulo = await prisma.articulo.create({
     data: {
-      nombreArticulo: nombreArticulo,
-      stockActual: stockActual,
-      unidadMedida: unidadMedida,
-      alertaStock: alertaStock,
-      notificarStock: notificarStock,
+      nombreArticulo,
+      stockActual,
+      unidadMedida,
+      alertaStock,
+      notificarStock,
     },
   });
 
@@ -28,7 +28,7 @@ const crearArticulo = async (
 };
 
 const eliminarArticulo = async (usuario, articuloId) => {
-  if ((usuario.rol !== usuario.rol) === 'ADMINISTRADOR') {
+  if (usuario.rol !== 'ADMINISTRADOR') {
     throw new Error('Usuario no tiene los permisos necesarios.');
   }
 
