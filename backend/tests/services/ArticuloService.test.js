@@ -36,3 +36,31 @@ describe('Prueba para obtener todos los articulos', () => {
     expect(resultadoObtenido[1].nombreArticulo).toBe('Articulo 2');
   });
 });
+
+describe('Prueba para obtener un articulo por ID', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('Debería retornar un articulo por su ID', async () => {
+    const mockArticulo = {
+      id: 1,
+      nombreArticulo: 'Articulo Test',
+      stockActual: 15,
+      unidadMedida: 'kg',
+      alertaStock: 7,
+      notificarStock: true,
+    };
+
+    mockPrisma.articulo.findUnique.mockResolvedValue(mockArticulo);
+
+    const resultadoObtenido = await articuloService.obtenerArticuloPorId(1);
+
+    expect(mockPrisma.articulo.findUnique).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.articulo.findUnique).toHaveBeenCalledWith({
+      where: { id: 1 },
+    });
+    expect(resultadoObtenido.nombreArticulo).toBe('Articulo Test');
+    expect(resultadoObtenido.id).toBe(1);
+  });
+});
