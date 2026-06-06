@@ -10,7 +10,7 @@ const crearArticulo = async (
   alertaStock,
   notificarStock
 ) => {
-  if (usuario.rol !== 'ADMINISTRADOR') {
+  if (usuario.rol !== 'ADMINISTRADOR' && usuario.rol !== 'AYUDANTE') {
     throw new Error('Usuario no tiene los permisos necesarios.');
   }
 
@@ -28,7 +28,7 @@ const crearArticulo = async (
 };
 
 const eliminarArticulo = async (usuario, articuloId) => {
-  if (usuario.rol !== 'ADMINISTRADOR') {
+  if (usuario.rol !== 'ADMINISTRADOR' && usuario.rol !== 'AYUDANTE') {
     throw new Error('Usuario no tiene los permisos necesarios.');
   }
 
@@ -71,7 +71,7 @@ const obtenerArticuloPorId = async (articuloId) => {
 };
 
 const actualizarArticulo = async (usuario, articuloId, datosActualizar) => {
-  if (usuario.rol !== 'ADMINISTRADOR') {
+  if (usuario.rol !== 'ADMINISTRADOR' && usuario.rol !== 'AYUDANTE') {
     throw new Error('Usuario no tiene los permisos necesarios.');
   }
 

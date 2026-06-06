@@ -90,7 +90,11 @@ const loginUsuario = async (correo, contrasena) => {
 };
 
 const eliminarUsuario = async (usuario, correoEliminar) => {
-  if (usuario.rol !== 'ADMINISTRADOR') {
+  if (
+    usuario.rol !== 'ADMINISTRADOR' &&
+    usuario.rol !== 'AYUDANTE' &&
+    usuario.rol !== 'PROFESOR'
+  ) {
     throw new Error('El usuario no tiene los permisos necesarios');
   }
 
@@ -117,7 +121,11 @@ const eliminarUsuario = async (usuario, correoEliminar) => {
 };
 
 const obtenerUsuarioPorCorreo = async (correo, usuario) => {
-  if (usuario.rol !== 'ADMINISTRADOR') {
+  if (
+    usuario.rol !== 'ADMINISTRADOR' &&
+    usuario.rol !== 'AYUDANTE' &&
+    usuario.rol !== 'PROFESOR'
+  ) {
     throw new Error('El usuario no tiene los permisos necesarios');
   }
 
@@ -141,7 +149,11 @@ const obtenerUsuarioPorCorreo = async (correo, usuario) => {
 };
 
 const ObtenerListaUsuarios = async (usuario) => {
-  if (usuario.rol !== 'ADMINISTRADOR') {
+  if (
+    usuario.rol !== 'ADMINISTRADOR' &&
+    usuario.rol !== 'AYUDANTE' &&
+    usuario.rol !== 'PROFESOR'
+  ) {
     throw new Error('El usuario no tiene los permisos necesarios');
   }
 
