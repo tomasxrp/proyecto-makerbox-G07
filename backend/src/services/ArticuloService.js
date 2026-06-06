@@ -92,7 +92,10 @@ const actualizarArticulo = async (usuario, articuloId, datosActualizar) => {
     data: datosActualizar,
   });
 
-  return articuloActualizado;
+  return {
+    mensaje: 'Artículo actualizado con éxito',
+    articuloActualizado,
+  };
 };
 
 module.exports = {
