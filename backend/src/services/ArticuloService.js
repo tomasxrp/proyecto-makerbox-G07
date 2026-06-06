@@ -59,18 +59,25 @@ const obtenerArticulos = async () => {
 const obtenerArticuloPorId = async (articuloId) => {
   const articuloEncontrado = await prisma.articulo.findUnique({
     where: {
-      id: Number(articuloId),
+      id: articuloId,
     },
   });
 
-  const actualizarArticulo = async (usuario, articuloId, datosActualizar) => {
+  if (!articuloEncontrado) {
+    throw new Error('El articulo no existe en la base de datos');
+  }
+
+  return articuloEncontrado;
+};
+
+const actualizarArticulo = async (usuario, articuloId, datosActualizar) => {
   if (usuario.rol !== 'ADMINISTRADOR') {
     throw new Error('Usuario no tiene los permisos necesarios.');
   }
 
   const articuloEncontrado = await prisma.articulo.findUnique({
     where: {
-      id: parseInt(articuloId, 10),
+      id: articuloId,
     },
   });
 
@@ -80,22 +87,12 @@ const obtenerArticuloPorId = async (articuloId) => {
 
   const articuloActualizado = await prisma.articulo.update({
     where: {
-      id: parseInt(articuloId, 10),
+      id: articuloId,
     },
     data: datosActualizar,
   });
 
-  return {
-    mensaje: 'Artículo actualizado con éxito',
-    articuloActualizado,
-  };
-};
-
-  if (!articuloEncontrado) {
-    throw new Error('El articulo no existe en la base de datos');
-  }
-
-  return articuloEncontrado;
+  return articuloActualizado;
 };
 
 module.exports = {
@@ -103,4 +100,5 @@ module.exports = {
   eliminarArticulo,
   obtenerArticulos,
   obtenerArticuloPorId,
+  actualizarArticulo,
 };
