@@ -50,8 +50,52 @@ const obtenerCursoPorId = async (req, res) => {
   }
 };
 
+const eliminarCurso = async (req, res) => {
+  try {
+    // extraemos la informacion de los parametros
+    const { cursoId } = req.params;
+    const { usuario } = req;
+
+    const cursoEliminado = await cursoService.eliminarCurso(
+      usuario,
+      cursoId
+    );
+
+    res.status(200).json({
+      cursoEliminado,
+    });
+  } catch (error) {
+    res.status(401).json({
+      mensaje: error.message || 'Error al tratar de eliminar el curso',
+    });
+  }
+};
+
+const actualizarCurso = async (req, res) => {
+  try {
+    // extraemos la informacion de los parametros y body
+    const { cursoId } = req.params;
+    const { usuario } = req;
+    const data = req.body;
+
+    const resultado = await cursoService.actualizarCurso(
+      usuario,
+      cursoId,
+      data
+    );
+
+    res.status(200).json(resultado);
+  } catch (error) {
+    res.status(401).json({
+      mensaje: error.message || 'Error al tratar de actualizar el curso',
+    });
+  }
+};
+
 module.exports = {
   crearCurso,
   obtenerCursos,
   obtenerCursoPorId,
+  eliminarCurso,
+  actualizarCurso,
 };

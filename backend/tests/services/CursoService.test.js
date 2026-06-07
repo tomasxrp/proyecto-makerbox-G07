@@ -155,7 +155,7 @@ describe('CursoService', () => {
         where: { id: '1' },
         data: { nombre: 'Nuevo Nombre' },
       });
-      expect(resultado.mensaje).toBe('Curso actualizado con éxito');
+      expect(resultado.mensaje).toBe('Curso actualizado con exito');
       expect(resultado.cursoActualizado.nombre).toBe('Nuevo Nombre');
     });
   });
