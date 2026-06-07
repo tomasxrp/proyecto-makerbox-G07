@@ -55,7 +55,7 @@ const eliminarCurso = async (usuario, cursoId) => {
     throw new Error('Usuario no tiene los permisos necesarios.');
   }
 
-  // bsucamos el curso expecifico por su id
+  // buscamos el curso expecifico por su id
   const cursoEncontrado = await prisma.curso.findUnique({
     where: {
       id: cursoId,
@@ -77,7 +77,7 @@ const eliminarCurso = async (usuario, cursoId) => {
 };
 
 const actualizarCurso = async (usuario, cursoId, data) => {
-  // validamos qeu el usuario tenga los permisos requeridos
+  // validamos que el usuario tenga los permisos requeridos
   if (
     usuario.rol !== 'ADMINISTRADOR' &&
     usuario.rol !== 'AYUDANTE' &&
