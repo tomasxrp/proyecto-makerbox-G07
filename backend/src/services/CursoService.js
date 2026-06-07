@@ -24,6 +24,29 @@ const crearCurso = async (usuario, nombre, refSemestre, refProfesor) => {
   return nuevoCurso;
 };
 
+const obtenerCursos = async () => {
+  // obtenemos todos los cursos registrados en la base de datos
+  const cursos = await prisma.curso.findMany();
+  return cursos;
+};
+
+const obtenerCursoPorId = async (cursoId) => {
+  // bsucamos el curso expecifico por su id
+  const cursoEncontrado = await prisma.curso.findUnique({
+    where: {
+      id: cursoId,
+    },
+  });
+
+  if (!cursoEncontrado) {
+    throw new Error('El curso no existe en la base de datos');
+  }
+
+  return cursoEncontrado;
+};
+
 module.exports = {
   crearCurso,
+  obtenerCursos,
+  obtenerCursoPorId,
 };
