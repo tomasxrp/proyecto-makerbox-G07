@@ -16,8 +16,8 @@ const validarBloqueHorario = (req, res, next) => {
         .json({ mensaje: 'Numero de bloque debe ser numero entero.'})
     }
 
-    // Validar formato de horas HH:MM
-    const formatoHora = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    // Validar formato de horas HH:MM (exactamente dos dígitos)
+    const formatoHora = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
     if (!formatoHora.test(horaInicio) || !formatoHora.test(horaFin)) {
         return res
         .status(400)

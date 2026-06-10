@@ -12,4 +12,28 @@ router.post(
     bloqueHorarioController.crearBloqueHorario
 );
 
+router.get(
+    '/',
+    validarToken,
+    bloqueHorarioController.obtenerTodosBloques
+);
+
+router.get(
+    '/:bloqueId',
+    validarToken,
+    bloqueHorarioController.obtenerBloquePorId
+);
+
+router.put(
+    '/actualizar/:bloqueId',
+    validarToken,
+    validarBloqueHorario,
+    bloqueHorarioController.actualizarBloqueHorario
+);
+
+router.delete(
+    '/eliminar/:bloqueId',
+    validarToken,
+    bloqueHorarioController.eliminarBloqueHorario
+);
 module.exports = router;
