@@ -12,6 +12,7 @@ export default function AlumnoView() {
   const [form, setForm] = useState({
     tipoSolicitud: 'Impresion 3D',
     nombreCurso: '',
+    refCurso: '',
     colorOpcion1: '',
     colorOpcion2: '',
     colorOpcion3: '',
@@ -19,6 +20,8 @@ export default function AlumnoView() {
     urlModeloStl: '',
     comentario: '',
   });
+
+  const [cursos, setCursos] = useState([]);
 
   const token = localStorage.getItem('token');
 
@@ -32,11 +35,22 @@ export default function AlumnoView() {
     setImpresiones(response.data.impresiones || []);
   }, [token]);
 
+  const cargarCursos = useCallback(async () => {
+    const response = await axios.get(`${API_URL}/api/curso`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    setCursos(response.data.cursos || []);
+  }, [token]);
+
   useEffect(() => {
     if (token) {
+      cargarCursos();
       cargarImpresiones();
     }
-  }, [token, cargarImpresiones]);
+  }, [token, cargarImpresiones, cargarCursos]);
 
   const handleChange = (e) => {
     setForm({
@@ -63,6 +77,7 @@ export default function AlumnoView() {
       setForm({
         tipoSolicitud: 'Impresion 3D',
         nombreCurso: '',
+        refCurso: '',
         colorOpcion1: '',
         colorOpcion2: '',
         colorOpcion3: '',
@@ -174,14 +189,30 @@ export default function AlumnoView() {
             </div>
 
             <form onSubmit={crearSolicitud} className="grid grid-cols-1 gap-4">
-              <input
-                name="nombreCurso"
-                placeholder="Nombre del curso"
-                value={form.nombreCurso}
-                onChange={handleChange}
+              <select
+                name="refCurso"
+                value={form.refCurso}
+                onChange={(e) => {
+                  const cursoSeleccionado = cursos.find(
+                    (curso) => curso.id === e.target.value
+                  );
+
+                  setForm({
+                    ...form,
+                    refCurso: e.target.value,
+                    nombreCurso: cursoSeleccionado?.nombre || '',
+                  });
+                }}
                 className="rounded-lg border p-3"
                 required
-              />
+              >
+                <option value="">Seleccionar curso</option>
+                {cursos.map((curso) => (
+                  <option key={curso.id} value={curso.id}>
+                    {curso.nombre}
+                  </option>
+                ))}
+              </select>
 
               <input
                 name="colorOpcion1"

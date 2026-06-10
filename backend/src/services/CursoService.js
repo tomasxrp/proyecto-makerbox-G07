@@ -2,17 +2,21 @@ const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
+const tienePermisoGestionCurso = (usuario) => {
+  const rolUsuario = usuario.usuarioRol || usuario.rol;
+
+  return (
+    rolUsuario === 'ADMINISTRADOR' ||
+    rolUsuario === 'AYUDANTE' ||
+    rolUsuario === 'PROFESOR'
+  );
+};
+
 const crearCurso = async (usuario, nombre, refSemestre, refProfesor) => {
-  // validamos qeu el usuario tenga los permisos requeridos
-  if (
-    usuario.rol !== 'ADMINISTRADOR' &&
-    usuario.rol !== 'AYUDANTE' &&
-    usuario.rol !== 'PROFESOR'
-  ) {
+  if (!tienePermisoGestionCurso(usuario)) {
     throw new Error('Usuario no tiene los permisos necesarios.');
   }
 
-  // se crea el curso en la base de datos
   const nuevoCurso = await prisma.curso.create({
     data: {
       nombre,
@@ -25,13 +29,28 @@ const crearCurso = async (usuario, nombre, refSemestre, refProfesor) => {
 };
 
 const obtenerCursos = async () => {
-  // obtenemos todos los cursos registrados en la base de datos
-  const cursos = await prisma.curso.findMany();
+  const cursos = await prisma.curso.findMany({
+    include: {
+      semestre: true,
+      profesor: {
+        select: {
+          id: true,
+          nombre: true,
+          apellido: true,
+          correo: true,
+        },
+      },
+      impresions: true,
+    },
+    orderBy: {
+      creadoEn: 'desc',
+    },
+  });
+
   return cursos;
 };
 
 const obtenerCursoPorId = async (cursoId) => {
-  // bsucamos el curso expecifico por su id
   const cursoEncontrado = await prisma.curso.findUnique({
     where: {
       id: cursoId,
@@ -46,16 +65,10 @@ const obtenerCursoPorId = async (cursoId) => {
 };
 
 const eliminarCurso = async (usuario, cursoId) => {
-  // validamos qeu el usuario tenga los permisos requeridos
-  if (
-    usuario.rol !== 'ADMINISTRADOR' &&
-    usuario.rol !== 'AYUDANTE' &&
-    usuario.rol !== 'PROFESOR'
-  ) {
+  if (!tienePermisoGestionCurso(usuario)) {
     throw new Error('Usuario no tiene los permisos necesarios.');
   }
 
-  // buscamos el curso expecifico por su id
   const cursoEncontrado = await prisma.curso.findUnique({
     where: {
       id: cursoId,
@@ -66,7 +79,6 @@ const eliminarCurso = async (usuario, cursoId) => {
     throw new Error('El curso no existe en la base de datos');
   }
 
-  // eliminamos el curso de la base de datos
   const cursoEliminado = await prisma.curso.delete({
     where: {
       id: cursoId,
@@ -77,16 +89,10 @@ const eliminarCurso = async (usuario, cursoId) => {
 };
 
 const actualizarCurso = async (usuario, cursoId, data) => {
-  // validamos que el usuario tenga los permisos requeridos
-  if (
-    usuario.rol !== 'ADMINISTRADOR' &&
-    usuario.rol !== 'AYUDANTE' &&
-    usuario.rol !== 'PROFESOR'
-  ) {
+  if (!tienePermisoGestionCurso(usuario)) {
     throw new Error('Usuario no tiene los permisos necesarios.');
   }
 
-  // bsucamos el curso expecifico por su id
   const cursoEncontrado = await prisma.curso.findUnique({
     where: {
       id: cursoId,
@@ -97,7 +103,6 @@ const actualizarCurso = async (usuario, cursoId, data) => {
     throw new Error('El curso no existe en la base de datos');
   }
 
-  // actualizamos el curso en la base de datos
   const cursoActualizado = await prisma.curso.update({
     where: {
       id: cursoId,
