@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -39,6 +39,7 @@ export default function Login() {
         'usuario',
         JSON.stringify(data.resultadoLogin.usuario)
       );
+      localStorage.setItem('ultimoAcceso', new Date().toISOString());
 
       const { rol } = data.resultadoLogin.usuario;
 

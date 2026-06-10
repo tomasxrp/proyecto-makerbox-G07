@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 
@@ -9,6 +10,7 @@ export default function Navbar({ onToggleSidebar }) {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('usuario');
+    localStorage.removeItem('ultimoAcceso');
     navigate('/login');
   };
 

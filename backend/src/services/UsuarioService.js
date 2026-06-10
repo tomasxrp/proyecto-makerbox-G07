@@ -58,7 +58,7 @@ const loginUsuario = async (correo, contrasena) => {
     },
   });
   if (!usuarioObtenido) {
-    throw new Error('Correo no registrado');
+    throw new Error('Correo o contraseña incorrectos');
   }
 
   // verificar si la contrasena es correcta
@@ -67,7 +67,7 @@ const loginUsuario = async (correo, contrasena) => {
     usuarioObtenido.passUsuario
   );
   if (!contrasenaValida) {
-    throw new Error('Contraseña incorrecta');
+    throw new Error('Correo o contraseña incorrectos');
   }
 
   const payloadJWT = {
@@ -90,7 +90,11 @@ const loginUsuario = async (correo, contrasena) => {
 };
 
 const eliminarUsuario = async (usuario, correoEliminar) => {
-  if (usuario.rol !== 'ADMINISTRADOR') {
+  if (
+    usuario.rol !== 'ADMINISTRADOR' &&
+    usuario.rol !== 'AYUDANTE' &&
+    usuario.rol !== 'PROFESOR'
+  ) {
     throw new Error('El usuario no tiene los permisos necesarios');
   }
 
@@ -117,7 +121,11 @@ const eliminarUsuario = async (usuario, correoEliminar) => {
 };
 
 const obtenerUsuarioPorCorreo = async (correo, usuario) => {
-  if (usuario.rol !== 'ADMINISTRADOR') {
+  if (
+    usuario.rol !== 'ADMINISTRADOR' &&
+    usuario.rol !== 'AYUDANTE' &&
+    usuario.rol !== 'PROFESOR'
+  ) {
     throw new Error('El usuario no tiene los permisos necesarios');
   }
 
@@ -141,7 +149,11 @@ const obtenerUsuarioPorCorreo = async (correo, usuario) => {
 };
 
 const ObtenerListaUsuarios = async (usuario) => {
-  if (usuario.rol !== 'ADMINISTRADOR') {
+  if (
+    usuario.rol !== 'ADMINISTRADOR' &&
+    usuario.rol !== 'AYUDANTE' &&
+    usuario.rol !== 'PROFESOR'
+  ) {
     throw new Error('El usuario no tiene los permisos necesarios');
   }
 

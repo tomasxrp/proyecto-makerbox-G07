@@ -1,3 +1,4 @@
+// AGREGO ESTE COMENTARIO PARA PROBAR LOS TEST UNITARIOS Y DE INTEGRACION
 const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
@@ -33,7 +34,7 @@ const crearSemestre = async (
 };
 
 const eliminarSemestre = async (usuario, semestreId) => {
-  // Validar que el usuario tenga los permisos necesarios
+  // Validar que el usuario tenga los permisos necesarios)
   if (usuario.rol !== 'ADMINISTRADOR') {
     throw new Error('Usuario no tiene los permisos necesarios.');
   }

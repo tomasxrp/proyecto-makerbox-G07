@@ -4,7 +4,7 @@ const validarToken = (req, res, next) => {
   try {
     const auth = req.headers.authorization;
     if (!auth) {
-      return res.status(400).json({
+      return res.status(401).json({
         mensaje: 'Token no proporcionado',
       });
     }

@@ -31,7 +31,7 @@ const eliminarSemestre = async (req, res) => {
 
     const semestreEliminado = await semestreService.eliminarSemestre(
       usuario,
-      semestreId
+      Number(semestreId)
     );
 
     res.status(200).json({
@@ -46,7 +46,7 @@ const eliminarSemestre = async (req, res) => {
 
 const obtenerSemestres = async (req, res) => {
   try {
-    const semestres = await semestreService.obtenerSemestres();
+    const semestres = await semestreService.obtenerTodosLosSemestres();
     res.status(200).json({
       semestres,
     });
@@ -60,7 +60,9 @@ const obtenerSemestres = async (req, res) => {
 const obtenerSemestrePorId = async (req, res) => {
   try {
     const { semestreId } = req.params;
-    const semestre = await semestreService.obtenerSemestrePorId(semestreId);
+    const semestre = await semestreService.obtenerSemestrePorId(
+      Number(semestreId)
+    );
     res.status(200).json({
       semestre,
     });
