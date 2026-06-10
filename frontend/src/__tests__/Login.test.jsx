@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Login from '../pages/Login';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 const navigateMock = vi.hoisted(() => vi.fn());
 const axiosMock = vi.hoisted(() => ({
   post: vi.fn(),
@@ -72,7 +73,7 @@ describe('Login', () => {
     await user.click(screen.getByRole('button', { name: /acceder/i }));
 
     expect(axiosMock.post).toHaveBeenCalledWith(
-      'https://proyecto-makerbox.onrender.com/api/usuarios/login',
+      `${API_URL}/api/usuarios/login`,
       {
         correo: 'ana@makerbox.cl',
         contrasena: 'secreta123',

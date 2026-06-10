@@ -1,10 +1,13 @@
 import React from 'react';
+import axios from 'axios';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Home from '../pages/Home';
 
 const navigateMock = vi.hoisted(() => vi.fn());
+
+vi.mock('axios');
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -19,6 +22,11 @@ describe('Home', () => {
   beforeEach(() => {
     localStorage.clear();
     navigateMock.mockClear();
+    axios.get.mockResolvedValue({
+      data: {
+        impresiones: [],
+      },
+    });
   });
 
   it('renders the student dashboard view', () => {
@@ -39,9 +47,11 @@ describe('Home', () => {
       screen.getByRole('heading', { name: /hola, ana/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: /mis proyectos/i })
+      screen.getByRole('heading', { name: /mis solicitudes de impresión/i })
     ).toBeInTheDocument();
-    expect(screen.getByText(/72% completado/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /nueva solicitud/i })
+    ).toBeInTheDocument();
   });
 
   it('clears the session when logout is clicked', async () => {

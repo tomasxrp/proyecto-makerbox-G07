@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AdminView from '../components/dashboard/AdminView';
 import ProfesorView from '../components/dashboard/ProfesorView';
 import AlumnoView from '../components/dashboard/AlumnoView';
+import AyudanteView from '../components/dashboard/AyudanteView';
 
 const formatLastAccess = (value) => {
   if (!value) {
@@ -56,7 +57,7 @@ export default function Home() {
         return <p>Vista de solicitante en construcción</p>;
 
       case 'AYUDANTE':
-        return <p>Vista de ayudante en construcción</p>;
+        return <AyudanteView />;
       default:
         return <p>Rol no reconocido</p>;
     }
