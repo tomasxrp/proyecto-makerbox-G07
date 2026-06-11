@@ -39,6 +39,11 @@ router.post(
   bloqueReservadoController.verificarDisponibilidadBloque
 );
 router.delete(
+  '/reserva/:reservaId',
+  validarToken,
+  bloqueReservadoController.eliminarBloquesPorReserva
+);
+router.delete(
   '/:bloqueId/:reservaId',
   validarToken,
   bloqueReservadoController.eliminarBloqueReservado
