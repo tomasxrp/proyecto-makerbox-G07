@@ -40,6 +40,14 @@ const mockPrisma = {
     update: jest.fn(),
     delete: jest.fn(),
   },
+  bloqueReservado: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    findMany: jest.fn(),
+    findFirst: jest.fn(),
+    delete: jest.fn(),
+    deleteMany: jest.fn(),
+  },
 };
 
 jest.mock('@prisma/client', () => ({
