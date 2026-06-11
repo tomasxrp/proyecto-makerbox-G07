@@ -7,6 +7,8 @@ const articuloRoutes = require('./routes/ArticuloRoutes');
 const cursoRoutes = require('./routes/CursoRoutes');
 const impresionRoutes = require('./routes/ImpresionRoutes');
 const bloqueHorarioRoutes = require('./routes/BloqueHorarioRoutes');
+const reservaRoutes = require('./routes/ReservaRoutes');
+const bloqueReservadoRoutes = require('./routes/BloqueReservadoRoutes');
 const estudianteCursoRoutes = require('./routes/EstudianteCursoRoutes');
 const grupoCursoRoutes = require('./routes/GrupoCursoRoutes');
 
@@ -22,6 +24,8 @@ app.use('/api/articulo', articuloRoutes);
 app.use('/api/curso', cursoRoutes);
 app.use('/api/impresion', impresionRoutes);
 app.use('/api/bloque-horario', bloqueHorarioRoutes);
+app.use('/api/reservas', reservaRoutes);
+app.use('/api/bloque-reservado', bloqueReservadoRoutes);
 app.use('/api/estudiante-curso', estudianteCursoRoutes);
 app.use('/api/grupo-curso', grupoCursoRoutes);
 app.get('/', (req, res) => {
