@@ -1,4 +1,3 @@
-// backend/tests/integration/bloqueHorario.integration.test.js
 // eslint-disable-next-line
 const mockPrisma = require('../prismaMock');
 
@@ -39,9 +38,7 @@ describe('Prueba de integración API bloques horarios', () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.mensaje).toBe(
-        'Todos los campos son obligatorios'
-      );
+      expect(response.body.mensaje).toBe('Todos los campos son obligatorios');
     });
 
     it('Si nroBloque no es entero debe retornar error 400', async () => {
@@ -75,9 +72,7 @@ describe('Prueba de integración API bloques horarios', () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.mensaje).toBe(
-        'Formato de hora debe ser HH:MM'
-      );
+      expect(response.body.mensaje).toBe('Formato de hora debe ser HH:MM');
     });
 
     it('Si el usuario no es ADMINISTRADOR debe retornar error 400', async () => {
@@ -140,9 +135,7 @@ describe('Prueba de integración API bloques horarios', () => {
         });
 
       expect(response.status).toBe(202);
-      expect(response.body.mensaje).toBe(
-        'Bloque horario creado exitosamente'
-      );
+      expect(response.body.mensaje).toBe('Bloque horario creado exitosamente');
       expect(response.body.bloque.nroBloque).toBe(1);
     });
   });
@@ -269,9 +262,7 @@ describe('Prueba de integración API bloques horarios', () => {
         .set('Authorization', 'Bearer token_simulado_profesor');
 
       expect(response.status).toBe(200);
-      expect(response.body.mensaje).toBe(
-        'Bloque horario obtenido con exito'
-      );
+      expect(response.body.mensaje).toBe('Bloque horario obtenido con exito');
       expect(response.body.bloque.nroBloque).toBe(1);
     });
   });
@@ -320,9 +311,7 @@ describe('Prueba de integración API bloques horarios', () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.mensaje).toBe(
-        'Todos los campos son obligatorios'
-      );
+      expect(response.body.mensaje).toBe('Todos los campos son obligatorios');
     });
 
     it('Si el bloque no existe debe retornar error 401', async () => {
@@ -427,9 +416,7 @@ describe('Prueba de integración API bloques horarios', () => {
         .set('Authorization', 'Bearer token_simulado_admin');
 
       expect(response.status).toBe(200);
-      expect(response.body.mensaje).toBe(
-        'Bloque horario eliminado con exito'
-      );
+      expect(response.body.mensaje).toBe('Bloque horario eliminado con exito');
       expect(response.body.bloque.nroBloque).toBe(1);
     });
   });

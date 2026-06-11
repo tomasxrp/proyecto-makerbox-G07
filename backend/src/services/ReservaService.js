@@ -3,6 +3,10 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 const crearReserva = async (datos) => {
+  if (!datos.fechaReserva) {
+    throw new Error('La fecha de reserva es requerida');
+  }
+
   const nuevaReserva = await prisma.reserva.create({
     data: {
       fechaReserva: new Date(datos.fechaReserva),
@@ -153,7 +157,9 @@ const cancelarReserva = async (id) => {
 
 const confirmarReserva = async (id, usuario) => {
   if (usuario.rol !== 'AYUDANTE' && usuario.rol !== 'ADMINISTRADOR') {
-    throw new Error('Solo ayudantes o administradores pueden confirmar reservas');
+    throw new Error(
+      'Solo ayudantes o administradores pueden confirmar reservas'
+    );
   }
 
   const reserva = await prisma.reserva.update({
