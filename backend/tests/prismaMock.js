@@ -47,6 +47,12 @@ const mockPrisma = {
     findFirst: jest.fn(),
     delete: jest.fn(),
     deleteMany: jest.fn(),
+  estudianteCurso: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    findMany: jest.fn(),
+    delete: jest.fn(),
+    update: jest.fn(),
   },
 };
 
