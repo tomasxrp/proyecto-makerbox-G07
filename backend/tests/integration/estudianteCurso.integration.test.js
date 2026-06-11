@@ -35,7 +35,7 @@ describe('Prueba de integracion API EstudianteCurso', () => {
         });
 
       expect(response.status).toBe(401);
-      expect(response.body.mensaje).toBe('El usuario no tiene los permisos necesarios');
+      expect(response.body.mensaje).toBe('Usuario no tiene los permisos necesarios.');
     });
 
     it('Si faltan datos obligatorios debe retornar error 400', async () => {
