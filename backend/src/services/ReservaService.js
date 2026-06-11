@@ -102,8 +102,100 @@ const obtenerReservaPorId = async (id) => {
   return reserva;
 };
 
+const actualizarReserva = async (id, datos) => {
+  const reserva = await prisma.reserva.update({
+    where: { id },
+    data: {
+      estadoReserva: datos.estadoReserva || undefined,
+      solicitanteNombre: datos.solicitanteNombre || undefined,
+      solicitanteApellido: datos.solicitanteApellido || undefined,
+      solicitanteCorreo: datos.solicitanteCorreo || undefined,
+      motivoReserva: datos.motivoReserva || undefined,
+      refAyudante: datos.refAyudante || undefined,
+    },
+    include: {
+      bloqueReservados: {
+        include: {
+          bloque: true,
+        },
+      },
+      ayudante: {
+        select: {
+          id: true,
+          nombre: true,
+          apellido: true,
+          correo: true,
+        },
+      },
+    },
+  });
+
+  return reserva;
+};
+
+const cancelarReserva = async (id) => {
+  const reserva = await prisma.reserva.update({
+    where: { id },
+    data: {
+      estadoReserva: 'CANCELADA',
+    },
+    include: {
+      bloqueReservados: {
+        include: {
+          bloque: true,
+        },
+      },
+    },
+  });
+
+  return reserva;
+};
+
+const confirmarReserva = async (id, usuario) => {
+  if (usuario.rol !== 'AYUDANTE' && usuario.rol !== 'ADMINISTRADOR') {
+    throw new Error('Solo ayudantes o administradores pueden confirmar reservas');
+  }
+
+  const reserva = await prisma.reserva.update({
+    where: { id },
+    data: {
+      estadoReserva: 'CONFIRMADA',
+      refAyudante: usuario.rol === 'AYUDANTE' ? usuario.id : undefined,
+    },
+    include: {
+      bloqueReservados: {
+        include: {
+          bloque: true,
+        },
+      },
+      ayudante: {
+        select: {
+          id: true,
+          nombre: true,
+          apellido: true,
+          correo: true,
+        },
+      },
+    },
+  });
+
+  return reserva;
+};
+
+const eliminarReserva = async (id) => {
+  const reserva = await prisma.reserva.delete({
+    where: { id },
+  });
+
+  return reserva;
+};
+
 module.exports = {
   crearReserva,
   obtenerReservas,
   obtenerReservaPorId,
+  actualizarReserva,
+  cancelarReserva,
+  confirmarReserva,
+  eliminarReserva,
 };

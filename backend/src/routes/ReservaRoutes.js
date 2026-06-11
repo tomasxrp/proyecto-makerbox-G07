@@ -12,7 +12,8 @@ router.post(
 );
 
 router.get(
-  '/', validarToken, 
+  '/', 
+  validarToken, 
   reservaController.obtenerReservas
 );
 
@@ -20,6 +21,31 @@ router.get(
   '/:id', 
   validarToken, 
   reservaController.obtenerReservaPorId
+);
+
+router.put(
+  '/:id', 
+  validarToken, 
+  validarReserva, 
+  reservaController.actualizarReserva
+);
+
+router.patch(
+  '/:id/cancelar', 
+  validarToken, 
+  reservaController.cancelarReserva
+);
+
+router.patch(
+  '/:id/confirmar', 
+  validarToken, 
+  reservaController.confirmarReserva
+);
+
+router.delete(
+  '/:id', 
+  validarToken, 
+  reservaController.eliminarReserva
 );
 
 module.exports = router;
