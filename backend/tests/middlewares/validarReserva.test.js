@@ -162,7 +162,92 @@ describe('Middleware: validarReserva', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('Debería llamar a next() si todos los datos son válidos', () => {
+  it('Debería retornar 400 si bloqueIds no es un array', () => {
+    const fechaFutura = new Date(new Date().getTime() + 86400000).toISOString();
+
+    req.body = {
+      fechaReserva: fechaFutura,
+      solicitanteNombre: 'Juan',
+      solicitanteApellido: 'Pérez',
+      solicitanteCorreo: 'juan@utalca.cl',
+      solicitanteRut: '12345678-9',
+      motivoReserva: 'Usar sala',
+      bloqueIds: 'no-es-un-array',
+    };
+
+    validarReserva(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      mensaje: 'bloqueIds debe ser un array de IDs',
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('Debería retornar 400 si bloqueIds está vacío', () => {
+    const fechaFutura = new Date(new Date().getTime() + 86400000).toISOString();
+
+    req.body = {
+      fechaReserva: fechaFutura,
+      solicitanteNombre: 'Juan',
+      solicitanteApellido: 'Pérez',
+      solicitanteCorreo: 'juan@utalca.cl',
+      solicitanteRut: '12345678-9',
+      motivoReserva: 'Usar sala',
+      bloqueIds: [],
+    };
+
+    validarReserva(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      mensaje: 'Debe proporcionar al menos un bloque horario',
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('Debería retornar 400 si algún bloqueId no es UUID válido', () => {
+    const fechaFutura = new Date(new Date().getTime() + 86400000).toISOString();
+
+    req.body = {
+      fechaReserva: fechaFutura,
+      solicitanteNombre: 'Juan',
+      solicitanteApellido: 'Pérez',
+      solicitanteCorreo: 'juan@utalca.cl',
+      solicitanteRut: '12345678-9',
+      motivoReserva: 'Usar sala',
+      bloqueIds: ['550e8400-e29b-41d4-a716-446655440000', 'id-invalido'],
+    };
+
+    validarReserva(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalled();
+    expect(res.json.mock.calls[0][0].mensaje).toContain(
+      'no tiene un formato válido'
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('Debería llamar a next() si todos los datos son válidos sin bloques', () => {
+    const fechaFutura = new Date(new Date().getTime() + 86400000).toISOString();
+
+    req.body = {
+      fechaReserva: fechaFutura,
+      solicitanteNombre: 'Juan',
+      solicitanteApellido: 'Pérez',
+      solicitanteCorreo: 'juan@utalca.cl',
+      solicitanteRut: '12345678-9',
+      motivoReserva: 'Usar sala interactiva',
+    };
+
+    validarReserva(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it('Debería llamar a next() si todos los datos son válidos con bloques', () => {
     const fechaFutura = new Date(new Date().getTime() + 86400000).toISOString(); // En 1 día
 
     req.body = {

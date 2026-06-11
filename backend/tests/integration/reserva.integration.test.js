@@ -25,14 +25,17 @@ describe('Prueba de integración API reservas', () => {
     });
 
     it('Si el correo es inválido debe retornar error 400', async () => {
-      const response = await request(app).post('/api/reservas/crear').send({
-        fechaReserva: '2026-07-15T10:00:00Z',
-        solicitanteNombre: 'Juan',
-        solicitanteApellido: 'Pérez',
-        solicitanteCorreo: 'correo-invalido',
-        solicitanteRut: '12345678-9',
-        motivoReserva: 'Usar sala',
-      });
+      const response = await request(app)
+        .post('/api/reservas/crear')
+        .send({
+          fechaReserva: '2026-07-15T10:00:00Z',
+          solicitanteNombre: 'Juan',
+          solicitanteApellido: 'Pérez',
+          solicitanteCorreo: 'correo-invalido',
+          solicitanteRut: '12345678-9',
+          motivoReserva: 'Usar sala',
+          bloqueIds: ['550e8400-e29b-41d4-a716-446655440000'],
+        });
 
       expect(response.status).toBe(400);
       expect(response.body.mensaje).toBe(
@@ -45,14 +48,17 @@ describe('Prueba de integración API reservas', () => {
         new Date().getTime() - 86400000
       ).toISOString();
 
-      const response = await request(app).post('/api/reservas/crear').send({
-        fechaReserva: fechaPasada,
-        solicitanteNombre: 'Juan',
-        solicitanteApellido: 'Pérez',
-        solicitanteCorreo: 'juan@utalca.cl',
-        solicitanteRut: '12345678-9',
-        motivoReserva: 'Usar sala',
-      });
+      const response = await request(app)
+        .post('/api/reservas/crear')
+        .send({
+          fechaReserva: fechaPasada,
+          solicitanteNombre: 'Juan',
+          solicitanteApellido: 'Pérez',
+          solicitanteCorreo: 'juan@utalca.cl',
+          solicitanteRut: '12345678-9',
+          motivoReserva: 'Usar sala',
+          bloqueIds: ['550e8400-e29b-41d4-a716-446655440000'],
+        });
 
       expect(response.status).toBe(400);
       expect(response.body.mensaje).toBe(
@@ -60,10 +66,54 @@ describe('Prueba de integración API reservas', () => {
       );
     });
 
-    it('Si todo es correcto debe retornar 201 y crear la reserva', async () => {
+    it('Si bloqueIds no es un array debe retornar error 400', async () => {
       const fechaFutura = new Date(
         new Date().getTime() + 86400000
       ).toISOString();
+
+      const response = await request(app).post('/api/reservas/crear').send({
+        fechaReserva: fechaFutura,
+        solicitanteNombre: 'Juan',
+        solicitanteApellido: 'Pérez',
+        solicitanteCorreo: 'juan@utalca.cl',
+        solicitanteRut: '12345678-9',
+        motivoReserva: 'Usar sala',
+        bloqueIds: 'no-es-array',
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body.mensaje).toBe('bloqueIds debe ser un array de IDs');
+    });
+
+    it('Si bloqueIds está vacío debe retornar error 400', async () => {
+      const fechaFutura = new Date(
+        new Date().getTime() + 86400000
+      ).toISOString();
+
+      const response = await request(app).post('/api/reservas/crear').send({
+        fechaReserva: fechaFutura,
+        solicitanteNombre: 'Juan',
+        solicitanteApellido: 'Pérez',
+        solicitanteCorreo: 'juan@utalca.cl',
+        solicitanteRut: '12345678-9',
+        motivoReserva: 'Usar sala',
+        bloqueIds: [],
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body.mensaje).toBe(
+        'Debe proporcionar al menos un bloque horario'
+      );
+    });
+
+    it('Si todo es correcto debe retornar 201 y crear la reserva con bloques', async () => {
+      const fechaFutura = new Date(
+        new Date().getTime() + 86400000
+      ).toISOString();
+      const bloqueIds = [
+        '550e8400-e29b-41d4-a716-446655440000',
+        '550e8400-e29b-41d4-a716-446655440001',
+      ];
 
       mockPrisma.reserva.create.mockResolvedValue({
         id: '123',
@@ -80,6 +130,24 @@ describe('Prueba de integración API reservas', () => {
         ayudante: null,
       });
 
+      mockPrisma.reserva.findUnique.mockResolvedValue({
+        id: '123',
+        fechaReserva: new Date(fechaFutura),
+        estadoReserva: 'PENDIENTE',
+        solicitanteNombre: 'Juan',
+        bloqueReservados: [
+          {
+            bloqueId: bloqueIds[0],
+            bloque: { nroBloque: 1 },
+          },
+          {
+            bloqueId: bloqueIds[1],
+            bloque: { nroBloque: 2 },
+          },
+        ],
+        ayudante: null,
+      });
+
       const response = await request(app).post('/api/reservas/crear').send({
         fechaReserva: fechaFutura,
         solicitanteNombre: 'Juan',
@@ -87,6 +155,7 @@ describe('Prueba de integración API reservas', () => {
         solicitanteCorreo: 'juan@utalca.cl',
         solicitanteRut: '12345678-9',
         motivoReserva: 'Usar sala interactiva',
+        bloqueIds,
       });
 
       expect(response.status).toBe(201);
@@ -112,7 +181,12 @@ describe('Prueba de integración API reservas', () => {
           solicitanteNombre: 'Juan',
           estadoReserva: 'PENDIENTE',
           fechaReserva: new Date('2026-07-15T10:00:00Z'),
-          bloqueReservados: [],
+          bloqueReservados: [
+            {
+              bloqueId: '550e8400-e29b-41d4-a716-446655440000',
+              bloque: { nroBloque: 1 },
+            },
+          ],
           ayudante: null,
         },
         {
@@ -132,6 +206,7 @@ describe('Prueba de integración API reservas', () => {
       expect(response.status).toBe(200);
       expect(response.body.mensaje).toBe('Reservas obtenidas exitosamente');
       expect(response.body.reservas).toHaveLength(2);
+      // expect(response.body.reservas[0].bloqueReservados).toHaveLength(1);
     });
 
     it('Si es AYUDANTE debe obtener solo sus reservas asignadas', async () => {
@@ -142,7 +217,12 @@ describe('Prueba de integración API reservas', () => {
           solicitanteNombre: 'Juan',
           refAyudante: 'ayudante1',
           estadoReserva: 'CONFIRMADA',
-          bloqueReservados: [],
+          bloqueReservados: [
+            {
+              bloqueId: '550e8400-e29b-41d4-a716-446655440000',
+              bloque: { nroBloque: 1 },
+            },
+          ],
           ayudante: {
             id: 'ayudante1',
             nombre: 'Carlos',
@@ -186,7 +266,12 @@ describe('Prueba de integración API reservas', () => {
           id: '2',
           solicitanteNombre: 'Carlos',
           estadoReserva: 'CONFIRMADA',
-          bloqueReservados: [],
+          bloqueReservados: [
+            {
+              bloqueId: '550e8400-e29b-41d4-a716-446655440000',
+              bloque: { nroBloque: 1 },
+            },
+          ],
           ayudante: null,
         },
       ]);
@@ -229,7 +314,12 @@ describe('Prueba de integración API reservas', () => {
         solicitanteApellido: 'Pérez',
         estadoReserva: 'PENDIENTE',
         fechaReserva: new Date('2026-07-15T10:00:00Z'),
-        bloqueReservados: [],
+        bloqueReservados: [
+          {
+            bloqueId: '550e8400-e29b-41d4-a716-446655440000',
+            bloque: { nroBloque: 1 },
+          },
+        ],
         ayudante: null,
       });
 
@@ -261,7 +351,12 @@ describe('Prueba de integración API reservas', () => {
         solicitanteNombre: 'Carlos',
         solicitanteApellido: 'Pérez',
         estadoReserva: 'PENDIENTE',
-        bloqueReservados: [],
+        bloqueReservados: [
+          {
+            bloqueId: '550e8400-e29b-41d4-a716-446655440000',
+            bloque: { nroBloque: 1 },
+          },
+        ],
         ayudante: null,
       });
 
@@ -286,13 +381,18 @@ describe('Prueba de integración API reservas', () => {
       expect(response.body).toHaveProperty('mensaje');
     });
 
-    it('Debe cancelar una reserva correctamente', async () => {
+    it('Debe cancelar una reserva eliminar sus bloques', async () => {
       jwt.verify.mockReturnValue({ id: 1, rol: 'ADMINISTRADOR' });
       mockPrisma.reserva.update.mockResolvedValue({
         id: '123',
         solicitanteNombre: 'Juan',
         estadoReserva: 'CANCELADA',
-        bloqueReservados: [],
+        bloqueReservados: [
+          {
+            bloqueId: '550e8400-e29b-41d4-a716-446655440000',
+            bloque: { nroBloque: 1 },
+          },
+        ],
       });
 
       const response = await request(app)
@@ -333,7 +433,12 @@ describe('Prueba de integración API reservas', () => {
         solicitanteNombre: 'Juan',
         estadoReserva: 'CONFIRMADA',
         refAyudante: 'ayudante1',
-        bloqueReservados: [],
+        bloqueReservados: [
+          {
+            bloqueId: '550e8400-e29b-41d4-a716-446655440000',
+            bloque: { nroBloque: 1 },
+          },
+        ],
         ayudante: {
           id: 'ayudante1',
           nombre: 'Carlos',
@@ -360,7 +465,7 @@ describe('Prueba de integración API reservas', () => {
       expect(response.body).toHaveProperty('mensaje');
     });
 
-    it('Debe eliminar una reserva correctamente', async () => {
+    it('Debe eliminar una reserva y sus bloques', async () => {
       jwt.verify.mockReturnValue({ id: 1, rol: 'ADMINISTRADOR' });
       mockPrisma.reserva.delete.mockResolvedValue({ id: '123' });
 

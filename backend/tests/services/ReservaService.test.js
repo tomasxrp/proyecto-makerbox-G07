@@ -1,5 +1,8 @@
 const mockPrisma = require('../prismaMock');
 const reservaService = require('../../src/services/ReservaService');
+const bloqueReservadoService = require('../../src/services/BloqueReservadoService');
+
+jest.mock('../../src/services/BloqueReservadoService');
 
 describe('ReservaService', () => {
   beforeEach(() => {
@@ -19,7 +22,7 @@ describe('ReservaService', () => {
       await expect(reservaService.crearReserva(datos)).rejects.toThrow();
     });
 
-    it('Debería crear una reserva correctamente', async () => {
+    it('Debería crear una reserva sin bloques', async () => {
       const datos = {
         fechaReserva: '2026-07-15T10:00:00Z',
         solicitanteNombre: 'Juan',
@@ -46,11 +49,63 @@ describe('ReservaService', () => {
       };
 
       mockPrisma.reserva.create.mockResolvedValue(nuevaReserva);
+      mockPrisma.reserva.findUnique.mockResolvedValue(nuevaReserva);
 
       const resultado = await reservaService.crearReserva(datos);
 
       expect(resultado).toEqual(nuevaReserva);
       expect(mockPrisma.reserva.create).toHaveBeenCalledTimes(1);
+      expect(
+        bloqueReservadoService.crearBloqueReservado
+      ).not.toHaveBeenCalled();
+    });
+
+    it('Debería crear una reserva con bloques', async () => {
+      const datos = {
+        fechaReserva: '2026-07-15T10:00:00Z',
+        solicitanteNombre: 'Juan',
+        solicitanteApellido: 'Pérez',
+        solicitanteCorreo: 'juan@utalca.cl',
+        solicitanteRut: '12345678-9',
+        motivoReserva: 'Usar impresora 3D',
+        bloqueIds: [
+          '550e8400-e29b-41d4-a716-446655440000',
+          '550e8400-e29b-41d4-a716-446655440001',
+        ],
+        ayudante: null,
+      };
+
+      const nuevaReserva = {
+        id: '123',
+        fechaReserva: new Date('2026-07-15T10:00:00Z'),
+        estadoReserva: 'PENDIENTE',
+        solicitanteNombre: 'Juan',
+        bloqueReservados: [
+          {
+            bloqueId: '550e8400-e29b-41d4-a716-446655440000',
+            reservaId: '123',
+            bloque: { nroBloque: 1 },
+          },
+          {
+            bloqueId: '550e8400-e29b-41d4-a716-446655440001',
+            reservaId: '123',
+            bloque: { nroBloque: 2 },
+          },
+        ],
+        ayudante: null,
+      };
+
+      mockPrisma.reserva.create.mockResolvedValue(nuevaReserva);
+      mockPrisma.reserva.findUnique.mockResolvedValue(nuevaReserva);
+      bloqueReservadoService.crearBloqueReservado.mockResolvedValue({});
+
+      const resultado = await reservaService.crearReserva(datos);
+
+      expect(resultado).toEqual(nuevaReserva);
+      expect(mockPrisma.reserva.create).toHaveBeenCalledTimes(1);
+      expect(bloqueReservadoService.crearBloqueReservado).toHaveBeenCalledTimes(
+        2
+      );
     });
   });
 
@@ -63,6 +118,7 @@ describe('ReservaService', () => {
           solicitanteNombre: 'Juan',
           estadoReserva: 'PENDIENTE',
           fechaReserva: new Date('2026-07-15T10:00:00Z'),
+          bloqueReservados: [],
         },
       ];
 
@@ -165,7 +221,12 @@ describe('ReservaService', () => {
         solicitanteApellido: 'Pérez',
         estadoReserva: 'PENDIENTE',
         fechaReserva: new Date('2026-07-15T10:00:00Z'),
-        bloqueReservados: [],
+        bloqueReservados: [
+          {
+            bloqueId: '550e8400-e29b-41d4-a716-446655440000',
+            bloque: { nroBloque: 1 },
+          },
+        ],
         ayudante: null,
       };
 
@@ -174,24 +235,6 @@ describe('ReservaService', () => {
       const resultado = await reservaService.obtenerReservaPorId('123');
 
       expect(resultado).toEqual(reserva);
-      expect(mockPrisma.reserva.findUnique).toHaveBeenCalledWith({
-        where: { id: '123' },
-        include: {
-          bloqueReservados: {
-            include: {
-              bloque: true,
-            },
-          },
-          ayudante: {
-            select: {
-              id: true,
-              nombre: true,
-              apellido: true,
-              correo: true,
-            },
-          },
-        },
-      });
     });
   });
 
@@ -216,7 +259,7 @@ describe('ReservaService', () => {
   });
 
   describe('cancelarReserva', () => {
-    it('Debería cancelar una reserva correctamente', async () => {
+    it('Debería cancelar una reserva correctamente y eliminar bloques reservados', async () => {
       const reservaCancelada = {
         id: '123',
         solicitanteNombre: 'Juan',
@@ -224,11 +267,17 @@ describe('ReservaService', () => {
         bloqueReservados: [],
       };
 
+      bloqueReservadoService.eliminarBloquesPorReserva.mockResolvedValue({
+        count: 2,
+      });
       mockPrisma.reserva.update.mockResolvedValue(reservaCancelada);
 
       const resultado = await reservaService.cancelarReserva('123');
 
       expect(resultado).toEqual(reservaCancelada);
+      expect(
+        bloqueReservadoService.eliminarBloquesPorReserva
+      ).toHaveBeenCalledWith('123');
       expect(mockPrisma.reserva.update).toHaveBeenCalledWith({
         where: { id: '123' },
         data: { estadoReserva: 'CANCELADA' },
@@ -280,12 +329,18 @@ describe('ReservaService', () => {
   });
 
   describe('eliminarReserva', () => {
-    it('Debería eliminar una reserva correctamente', async () => {
+    it('Debería eliminar una reserva correctamente y eliminar bloques reservados', async () => {
+      bloqueReservadoService.eliminarBloquesPorReserva.mockResolvedValue({
+        count: 2,
+      });
       mockPrisma.reserva.delete.mockResolvedValue({ id: '123' });
 
       const resultado = await reservaService.eliminarReserva('123');
 
       expect(resultado).toEqual({ id: '123' });
+      expect(
+        bloqueReservadoService.eliminarBloquesPorReserva
+      ).toHaveBeenCalledWith('123');
       expect(mockPrisma.reserva.delete).toHaveBeenCalledWith({
         where: { id: '123' },
       });

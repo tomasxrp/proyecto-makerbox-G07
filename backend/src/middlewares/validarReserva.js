@@ -7,9 +7,10 @@ const validarReserva = (req, res, next) => {
       solicitanteCorreo,
       solicitanteRut,
       motivoReserva,
+      bloqueIds,
     } = req.body;
 
-    // Validación de informacion obligatoria
+    // Validación de campos requeridos
     if (!fechaReserva) {
       return res.status(400).json({
         mensaje: 'La fecha de reserva es requerida',
@@ -62,6 +63,33 @@ const validarReserva = (req, res, next) => {
       return res.status(400).json({
         mensaje: 'La fecha de reserva debe ser en el futuro',
       });
+    }
+
+    // Validar bloqueIds si se proporciona
+    if (bloqueIds !== undefined) {
+      if (!Array.isArray(bloqueIds)) {
+        return res.status(400).json({
+          mensaje: 'bloqueIds debe ser un array de IDs',
+        });
+      }
+
+      if (bloqueIds.length === 0) {
+        return res.status(400).json({
+          mensaje: 'Debe proporcionar al menos un bloque horario',
+        });
+      }
+
+      // Validar que cada bloqueId sea un UUID válido
+      const uuidRegex =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const idInvalido = bloqueIds.find(
+        (bloqueId) => !uuidRegex.test(bloqueId)
+      );
+      if (idInvalido) {
+        return res.status(400).json({
+          mensaje: `El ID de bloque ${idInvalido} no tiene un formato válido`,
+        });
+      }
     }
 
     return next();

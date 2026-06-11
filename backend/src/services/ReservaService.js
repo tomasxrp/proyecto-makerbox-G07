@@ -1,4 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
+const bloqueReservadoService = require('./BloqueReservadoService');
 
 const prisma = new PrismaClient();
 
@@ -34,6 +35,22 @@ const crearReserva = async (datos) => {
       },
     },
   });
+
+  // Si se proporcionan bloques, crear los BloqueReservado
+  if (
+    datos.bloqueIds &&
+    Array.isArray(datos.bloqueIds) &&
+    datos.bloqueIds.length > 0
+  ) {
+    await Promise.all(
+      datos.bloqueIds.map((bloqueId) =>
+        bloqueReservadoService.crearBloqueReservado({
+          bloqueId,
+          reservaId: nuevaReserva.id,
+        })
+      )
+    );
+  }
 
   return nuevaReserva;
 };
@@ -138,6 +155,10 @@ const actualizarReserva = async (id, datos) => {
 };
 
 const cancelarReserva = async (id) => {
+  // Primero eliminar todos los BloqueReservado asociados
+  await bloqueReservadoService.eliminarBloquesPorReserva(id);
+
+  // Luego actualizar el estado de la reserva
   const reserva = await prisma.reserva.update({
     where: { id },
     data: {
@@ -189,6 +210,10 @@ const confirmarReserva = async (id, usuario) => {
 };
 
 const eliminarReserva = async (id) => {
+  // Primero eliminar todos los BloqueReservado asociados
+  await bloqueReservadoService.eliminarBloquesPorReserva(id);
+
+  // Luego eliminar la reserva
   const reserva = await prisma.reserva.delete({
     where: { id },
   });
