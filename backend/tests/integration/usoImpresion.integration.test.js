@@ -357,13 +357,13 @@ describe('Pruebas de Integración: API Uso de Impresión', () => {
   });
 
   describe('GET /api/uso-impresion/impresion/:impresionId', () => {
-    it('Si el flujo es correcto debe retornar 200 con los materiales usados', async () => {
+    it('Si el flujo es correcto debe retornar 200 con materiales ordenados por cantidad', async () => {
       jwt.verify.mockReturnValue({ id: 'user-1', rol: 'ADMINISTRADOR' });
       mockPrisma.usoImpresion.findMany.mockResolvedValue([
         {
           id: 'uso-1',
           refImpresion: 'imp-1',
-          cantidadFilamento: 50,
+          cantidadFilamento: 80,
           articulo: {
             id: 'art-1',
             nombreArticulo: 'PLA Blanco',
@@ -378,17 +378,32 @@ describe('Pruebas de Integración: API Uso de Impresión', () => {
           },
           estudiante: null,
         },
+        {
+          id: 'uso-2',
+          refImpresion: 'imp-1',
+          cantidadFilamento: 30,
+          articulo: {
+            id: 'art-2',
+            nombreArticulo: 'PETG Negro',
+            unidadMedida: 'gramos',
+          },
+          solicitante: null,
+          estudiante: null,
+        },
       ]);
       const response = await request(app)
         .get('/api/uso-impresion/impresion/imp-1')
         .set('Authorization', 'Bearer token_simulado');
       expect(response.status).toBe(200);
-      expect(response.body.usosImpresion).toHaveLength(1);
-      expect(response.body.usosImpresion[0].refImpresion).toBe('imp-1');
+      expect(response.body.usosImpresion).toHaveLength(2);
+      expect(response.body.usosImpresion[0].cantidadFilamento).toBe(80);
       expect(response.body.usosImpresion[0].articulo.nombreArticulo).toBe(
         'PLA Blanco'
       );
-      expect(response.body.usosImpresion[0].cantidadFilamento).toBe(50);
+      expect(response.body.usosImpresion[1].cantidadFilamento).toBe(30);
+      expect(response.body.usosImpresion[0].cantidadFilamento).toBeGreaterThan(
+        response.body.usosImpresion[1].cantidadFilamento
+      );
     });
   });
 });

@@ -311,12 +311,12 @@ describe('Prueba para obtener materiales de una impresión', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
-  it('Debería retornar los materiales usados en una impresión específica', async () => {
+  it('Debería retornar materiales ordenados por cantidadFilamento descendente', async () => {
     const mockUsos = [
       {
         id: 'uso-1',
         refImpresion: 'imp-1',
-        cantidadFilamento: 50,
+        cantidadFilamento: 80,
         articulo: {
           id: 'art-1',
           nombreArticulo: 'PLA Blanco',
@@ -355,10 +355,12 @@ describe('Prueba para obtener materiales de una impresión', () => {
       await usoImpresionService.obtenerUsosImpresionPorImpresion('imp-1');
     expect(mockPrisma.usoImpresion.findMany).toHaveBeenCalledTimes(1);
     expect(resultadoObtenido).toHaveLength(2);
-    expect(resultadoObtenido[0].refImpresion).toBe('imp-1');
+    expect(resultadoObtenido[0].cantidadFilamento).toBe(80);
     expect(resultadoObtenido[0].articulo.nombreArticulo).toBe('PLA Blanco');
-    expect(resultadoObtenido[0].cantidadFilamento).toBe(50);
-    expect(resultadoObtenido[1].articulo.nombreArticulo).toBe('PETG Negro');
     expect(resultadoObtenido[1].cantidadFilamento).toBe(30);
+    expect(resultadoObtenido[1].articulo.nombreArticulo).toBe('PETG Negro');
+    expect(resultadoObtenido[0].cantidadFilamento).toBeGreaterThan(
+      resultadoObtenido[1].cantidadFilamento
+    );
   });
 });
