@@ -150,53 +150,103 @@ describe('Pruebas de Integración: API Uso de Impresión', () => {
   });
 
   describe('GET /api/uso-impresion/', () => {
-    it('Si el flujo completo es correcto debe retornar 200 y la lista', async () => {
+    it('Si el flujo completo es correcto debe retornar 200 con datos de material', async () => {
       jwt.verify.mockReturnValue({ id: 'user-1', rol: 'ADMINISTRADOR' });
-
       mockPrisma.usoImpresion.findMany.mockResolvedValue([
-        { id: 'uso-1', cantidadFilamento: 50 },
-        { id: 'uso-2', cantidadFilamento: 30 },
+        {
+          id: 'uso-1',
+          cantidadFilamento: 50,
+          refArticulo: 'art-1',
+          impresion: { id: 'imp-1', estado: 'PENDIENTE' },
+          articulo: {
+            id: 'art-1',
+            nombreArticulo: 'PLA Blanco',
+            unidadMedida: 'gramos',
+          },
+          solicitante: {
+            id: 'sol-1',
+            nombre: 'Juan',
+            apellido: 'Pérez',
+            correo: 'juan@test.com',
+            rut: '12345678-9',
+          },
+          estudiante: null,
+        },
+        {
+          id: 'uso-2',
+          cantidadFilamento: 30,
+          refArticulo: 'art-2',
+          impresion: { id: 'imp-2', estado: 'EN_PROCESO' },
+          articulo: {
+            id: 'art-2',
+            nombreArticulo: 'PETG Negro',
+            unidadMedida: 'gramos',
+          },
+          solicitante: null,
+          estudiante: null,
+        },
       ]);
-
       const response = await request(app)
         .get('/api/uso-impresion/')
         .set('Authorization', 'Bearer token_simulado');
-
       expect(response.status).toBe(200);
       expect(response.body.usosImpresion).toHaveLength(2);
+      expect(response.body.usosImpresion[0].cantidadFilamento).toBe(50);
+      expect(response.body.usosImpresion[0].refArticulo).toBe('art-1');
+      expect(response.body.usosImpresion[0].articulo.nombreArticulo).toBe(
+        'PLA Blanco'
+      );
+      expect(response.body.usosImpresion[1].cantidadFilamento).toBe(30);
+      expect(response.body.usosImpresion[1].articulo.nombreArticulo).toBe(
+        'PETG Negro'
+      );
     });
   });
 
   describe('GET /api/uso-impresion/:usoImpresionId', () => {
     it('Si el uso de impresión no existe debe retornar 404', async () => {
       jwt.verify.mockReturnValue({ id: 'user-1', rol: 'ADMINISTRADOR' });
-
       mockPrisma.usoImpresion.findUnique.mockResolvedValue(null);
-
       const response = await request(app)
         .get('/api/uso-impresion/id-inexistente')
         .set('Authorization', 'Bearer token_simulado');
-
       expect(response.status).toBe(404);
       expect(response.body.mensaje).toBe(
         'El uso de impresión no existe en la base de datos'
       );
     });
-
-    it('Si el flujo es correcto debe retornar 200', async () => {
+    it('Si el flujo es correcto debe retornar 200 con datos de material', async () => {
       jwt.verify.mockReturnValue({ id: 'user-1', rol: 'ADMINISTRADOR' });
-
       mockPrisma.usoImpresion.findUnique.mockResolvedValue({
         id: 'uso-1',
+        refImpresion: 'imp-1',
         cantidadFilamento: 50,
+        impresion: { id: 'imp-1', estado: 'PENDIENTE' },
+        articulo: {
+          id: 'art-1',
+          nombreArticulo: 'PLA Blanco',
+          unidadMedida: 'gramos',
+        },
+        solicitante: {
+          id: 'sol-1',
+          nombre: 'Juan',
+          apellido: 'Pérez',
+          correo: 'juan@test.com',
+          rut: '12345678-9',
+        },
+        estudiante: null,
       });
-
       const response = await request(app)
         .get('/api/uso-impresion/uso-1')
         .set('Authorization', 'Bearer token_simulado');
-
       expect(response.status).toBe(200);
       expect(response.body.usoImpresion.id).toBe('uso-1');
+      expect(response.body.usoImpresion.articulo.nombreArticulo).toBe(
+        'PLA Blanco'
+      );
+      expect(response.body.usoImpresion.cantidadFilamento).toBe(50);
+      expect(response.body.usoImpresion.impresion.id).toBe('imp-1');
+      expect(response.body.usoImpresion.solicitante.nombre).toBe('Juan');
     });
   });
 
@@ -307,20 +357,38 @@ describe('Pruebas de Integración: API Uso de Impresión', () => {
   });
 
   describe('GET /api/uso-impresion/impresion/:impresionId', () => {
-    it('Si el flujo es correcto debe retornar 200 con los usos filtrados', async () => {
+    it('Si el flujo es correcto debe retornar 200 con los materiales usados', async () => {
       jwt.verify.mockReturnValue({ id: 'user-1', rol: 'ADMINISTRADOR' });
-
       mockPrisma.usoImpresion.findMany.mockResolvedValue([
-        { id: 'uso-1', refImpresion: 'imp-1', cantidadFilamento: 50 },
+        {
+          id: 'uso-1',
+          refImpresion: 'imp-1',
+          cantidadFilamento: 50,
+          articulo: {
+            id: 'art-1',
+            nombreArticulo: 'PLA Blanco',
+            unidadMedida: 'gramos',
+          },
+          solicitante: {
+            id: 'sol-1',
+            nombre: 'Juan',
+            apellido: 'Pérez',
+            correo: 'juan@test.com',
+            rut: '12345678-9',
+          },
+          estudiante: null,
+        },
       ]);
-
       const response = await request(app)
         .get('/api/uso-impresion/impresion/imp-1')
         .set('Authorization', 'Bearer token_simulado');
-
       expect(response.status).toBe(200);
       expect(response.body.usosImpresion).toHaveLength(1);
       expect(response.body.usosImpresion[0].refImpresion).toBe('imp-1');
+      expect(response.body.usosImpresion[0].articulo.nombreArticulo).toBe(
+        'PLA Blanco'
+      );
+      expect(response.body.usosImpresion[0].cantidadFilamento).toBe(50);
     });
   });
 });

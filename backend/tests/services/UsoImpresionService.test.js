@@ -100,8 +100,7 @@ describe('Prueba para obtener todos los usos de impresión', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
-
-  it('Debería retornar la lista con todos los usos de impresión', async () => {
+  it('Debería retornar la lista con datos de material enfocados', async () => {
     const mockUsosImpresion = [
       {
         id: 'uso-1',
@@ -109,6 +108,21 @@ describe('Prueba para obtener todos los usos de impresión', () => {
         refSemestre: 'sem-1',
         cantidadFilamento: 50,
         refArticulo: 'art-1',
+        impresion: { id: 'imp-1', estado: 'PENDIENTE' },
+        articulo: {
+          id: 'art-1',
+          nombreArticulo: 'PLA Blanco',
+          unidadMedida: 'gramos',
+        },
+        semestre: { id: 'sem-1', anio: 2026, periodo: 1 },
+        solicitante: {
+          id: 'sol-1',
+          nombre: 'Juan',
+          apellido: 'Pérez',
+          correo: 'juan@test.com',
+          rut: '12345678-9',
+        },
+        estudiante: null,
       },
       {
         id: 'uso-2',
@@ -116,17 +130,35 @@ describe('Prueba para obtener todos los usos de impresión', () => {
         refSemestre: 'sem-1',
         cantidadFilamento: 30,
         refArticulo: 'art-2',
+        impresion: { id: 'imp-2', estado: 'EN_PROCESO' },
+        articulo: {
+          id: 'art-2',
+          nombreArticulo: 'PETG Negro',
+          unidadMedida: 'gramos',
+        },
+        semestre: { id: 'sem-1', anio: 2026, periodo: 1 },
+        solicitante: null,
+        estudiante: {
+          id: 'est-1',
+          nombre: 'María',
+          apellido: 'López',
+          correo: 'maria@test.com',
+          rut: '98765432-1',
+        },
       },
     ];
-
     mockPrisma.usoImpresion.findMany.mockResolvedValue(mockUsosImpresion);
-
     const resultadoObtenido = await usoImpresionService.obtenerUsosImpresion();
-
     expect(mockPrisma.usoImpresion.findMany).toHaveBeenCalledTimes(1);
     expect(resultadoObtenido).toHaveLength(2);
     expect(resultadoObtenido[0].id).toBe('uso-1');
+    expect(resultadoObtenido[0].cantidadFilamento).toBe(50);
+    expect(resultadoObtenido[0].refArticulo).toBe('art-1');
+    expect(resultadoObtenido[0].articulo.nombreArticulo).toBe('PLA Blanco');
     expect(resultadoObtenido[1].id).toBe('uso-2');
+    expect(resultadoObtenido[1].cantidadFilamento).toBe(30);
+    expect(resultadoObtenido[1].refArticulo).toBe('art-2');
+    expect(resultadoObtenido[1].articulo.nombreArticulo).toBe('PETG Negro');
   });
 });
 
@@ -134,29 +166,46 @@ describe('Prueba para obtener un uso de impresión por ID', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
-
-  it('Debería retornar un uso de impresión por su ID', async () => {
+  it('Debería retornar un uso de impresión con datos de material utilizado', async () => {
     const mockUsoImpresion = {
       id: 'uso-1',
       refImpresion: 'imp-1',
       refSemestre: 'sem-1',
       cantidadFilamento: 50,
       refArticulo: 'art-1',
+      impresion: {
+        id: 'imp-1',
+        estado: 'PENDIENTE',
+        tipoSolicitud: 'PERSONAL',
+        comentario: 'Pieza de prueba',
+      },
+      articulo: {
+        id: 'art-1',
+        nombreArticulo: 'PLA Blanco',
+        unidadMedida: 'gramos',
+      },
+      semestre: { id: 'sem-1', anio: 2026, periodo: 1 },
+      solicitante: {
+        id: 'sol-1',
+        nombre: 'Juan',
+        apellido: 'Pérez',
+        correo: 'juan@test.com',
+        rut: '12345678-9',
+      },
+      estudiante: null,
     };
-
     mockPrisma.usoImpresion.findUnique.mockResolvedValue(mockUsoImpresion);
-
     const resultadoObtenido =
       await usoImpresionService.obtenerUsoImpresionPorId('uso-1');
-
     expect(mockPrisma.usoImpresion.findUnique).toHaveBeenCalledTimes(1);
     expect(resultadoObtenido.id).toBe('uso-1');
     expect(resultadoObtenido.cantidadFilamento).toBe(50);
+    expect(resultadoObtenido.articulo.nombreArticulo).toBe('PLA Blanco');
+    expect(resultadoObtenido.impresion.id).toBe('imp-1');
+    expect(resultadoObtenido.solicitante.nombre).toBe('Juan');
   });
-
   it('Debería arrojar un error si el uso de impresión no existe', async () => {
     mockPrisma.usoImpresion.findUnique.mockResolvedValue(null);
-
     await expect(
       usoImpresionService.obtenerUsoImpresionPorId('id-inexistente')
     ).rejects.toThrow('El uso de impresión no existe en la base de datos');
@@ -258,24 +307,58 @@ describe('Prueba para eliminar un uso de impresión', () => {
   });
 });
 
-describe('Prueba para obtener usos de impresión por impresión', () => {
+describe('Prueba para obtener materiales de una impresión', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
-
-  it('Debería retornar los usos de impresión de una impresión específica', async () => {
+  it('Debería retornar los materiales usados en una impresión específica', async () => {
     const mockUsos = [
-      { id: 'uso-1', refImpresion: 'imp-1', cantidadFilamento: 50 },
-      { id: 'uso-2', refImpresion: 'imp-1', cantidadFilamento: 30 },
+      {
+        id: 'uso-1',
+        refImpresion: 'imp-1',
+        cantidadFilamento: 50,
+        articulo: {
+          id: 'art-1',
+          nombreArticulo: 'PLA Blanco',
+          unidadMedida: 'gramos',
+        },
+        solicitante: {
+          id: 'sol-1',
+          nombre: 'Juan',
+          apellido: 'Pérez',
+          correo: 'juan@test.com',
+          rut: '12345678-9',
+        },
+        estudiante: null,
+      },
+      {
+        id: 'uso-2',
+        refImpresion: 'imp-1',
+        cantidadFilamento: 30,
+        articulo: {
+          id: 'art-2',
+          nombreArticulo: 'PETG Negro',
+          unidadMedida: 'gramos',
+        },
+        solicitante: null,
+        estudiante: {
+          id: 'est-1',
+          nombre: 'María',
+          apellido: 'López',
+          correo: 'maria@test.com',
+          rut: '98765432-1',
+        },
+      },
     ];
-
     mockPrisma.usoImpresion.findMany.mockResolvedValue(mockUsos);
-
     const resultadoObtenido =
       await usoImpresionService.obtenerUsosImpresionPorImpresion('imp-1');
-
     expect(mockPrisma.usoImpresion.findMany).toHaveBeenCalledTimes(1);
     expect(resultadoObtenido).toHaveLength(2);
     expect(resultadoObtenido[0].refImpresion).toBe('imp-1');
+    expect(resultadoObtenido[0].articulo.nombreArticulo).toBe('PLA Blanco');
+    expect(resultadoObtenido[0].cantidadFilamento).toBe(50);
+    expect(resultadoObtenido[1].articulo.nombreArticulo).toBe('PETG Negro');
+    expect(resultadoObtenido[1].cantidadFilamento).toBe(30);
   });
 });
