@@ -61,9 +61,5 @@ const cambiarEstadoImpresion = async (req, res) => {
 module.exports = {
   crearImpresion,
   cambiarEstadoImpresion,
-
-module.exports = {
-  crearImpresion,
-
   obtenerImpresiones,
 };
