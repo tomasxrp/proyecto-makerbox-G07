@@ -5,6 +5,7 @@ const usuarioRoutes = require('./routes/UsuarioRoutes');
 const semestreRoutes = require('./routes/SemestreRoutes');
 const articuloRoutes = require('./routes/ArticuloRoutes');
 const cursoRoutes = require('./routes/CursoRoutes');
+const impresionRoutes = require('./routes/ImpresionRoutes');
 
 const app = express();
 // Se define el puerto que se usara, si no se define se usara el puerto 3000
@@ -16,7 +17,7 @@ app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/semestre', semestreRoutes);
 app.use('/api/articulo', articuloRoutes);
 app.use('/api/curso', cursoRoutes);
-
+app.use('/api/impresion', impresionRoutes);
 app.get('/', (req, res) => {
   res.send('Peticion GET recibida en el backend');
 });
