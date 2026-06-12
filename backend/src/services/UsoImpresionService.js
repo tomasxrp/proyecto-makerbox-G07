@@ -165,6 +165,48 @@ const obtenerUsoImpresionPorId = async (usoImpresionId) => {
   return usoImpresionEncontrado;
 };
 
+const obtenerUsosImpresionPorImpresion = async (refImpresion) => {
+  const usosImpresion = await prisma.usoImpresion.findMany({
+    where: { refImpresion },
+    include: {
+      articulo: {
+        select: {
+          id: true,
+          nombreArticulo: true,
+          unidadMedida: true,
+        },
+      },
+      semestre: {
+        select: {
+          id: true,
+          anio: true,
+          periodo: true,
+        },
+      },
+      solicitante: {
+        select: {
+          id: true,
+          nombre: true,
+          apellido: true,
+          correo: true,
+          rut: true,
+        },
+      },
+      estudiante: {
+        select: {
+          id: true,
+          nombre: true,
+          apellido: true,
+          correo: true,
+          rut: true,
+        },
+      },
+    },
+    orderBy: { cantidadFilamento: 'desc' },
+  });
+  return usosImpresion;
+};
+
 const actualizarUsoImpresion = async (
   usuario,
   usoImpresionId,
@@ -238,6 +280,7 @@ module.exports = {
   crearUsoImpresion,
   obtenerUsosImpresion,
   obtenerUsoImpresionPorId,
+  obtenerUsosImpresionPorImpresion,
   actualizarUsoImpresion,
   eliminarUsoImpresion,
 };

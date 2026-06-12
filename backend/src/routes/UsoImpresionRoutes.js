@@ -13,6 +13,11 @@ router.post(
 );
 router.get('/', validarToken, usoImpresionController.obtenerUsosImpresion);
 router.get(
+  '/impresion/:impresionId',
+  validarToken,
+  usoImpresionController.obtenerUsosImpresionPorImpresion
+);
+router.get(
   '/:usoImpresionId',
   validarToken,
   usoImpresionController.obtenerUsoImpresionPorId

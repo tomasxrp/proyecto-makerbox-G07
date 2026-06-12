@@ -51,6 +51,23 @@ const obtenerUsoImpresionPorId = async (req, res) => {
   }
 };
 
+const obtenerUsosImpresionPorImpresion = async (req, res) => {
+  try {
+    const { impresionId } = req.params;
+    const usosImpresion =
+      await usoImpresionService.obtenerUsosImpresionPorImpresion(impresionId);
+    res.status(200).json({
+      mensaje: 'Materiales de la impresión obtenidos exitosamente',
+      usosImpresion,
+    });
+  } catch (error) {
+    res.status(401).json({
+      mensaje:
+        error.message || 'Error al obtener los materiales de la impresión',
+    });
+  }
+};
+
 const actualizarUsoImpresion = async (req, res) => {
   try {
     const { usoImpresionId } = req.params;
@@ -96,6 +113,7 @@ module.exports = {
   crearUsoImpresion,
   obtenerUsosImpresion,
   obtenerUsoImpresionPorId,
+  obtenerUsosImpresionPorImpresion,
   actualizarUsoImpresion,
   eliminarUsoImpresion,
 };
