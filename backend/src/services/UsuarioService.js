@@ -82,6 +82,7 @@ const loginUsuario = async (correo, contrasena) => {
   return {
     token,
     usuario: {
+      id: usuarioObtenido.id,
       nombre: usuarioObtenido.nombre,
       apellido: usuarioObtenido.apellido,
       rol: usuarioObtenido.usuarioRol,

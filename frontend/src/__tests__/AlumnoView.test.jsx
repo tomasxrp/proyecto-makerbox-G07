@@ -43,12 +43,13 @@ describe('AlumnoView', () => {
     await user.click(screen.getByRole('button', { name: /nueva solicitud/i }));
 
     expect(
-      screen.getByRole('heading', { name: /solicitar impresión 3d/i })
+      screen.getByRole('heading', {
+        name: /solicitar impresión 3d/i,
+      })
     ).toBeInTheDocument();
 
-    expect(
-      screen.getByPlaceholderText(/nombre del curso/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/seleccionar curso/i)).toBeInTheDocument();
+
     expect(screen.getByPlaceholderText(/url archivo stl/i)).toBeInTheDocument();
   });
 });

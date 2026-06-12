@@ -13,6 +13,7 @@ const estudianteCursoRoutes = require('./routes/EstudianteCursoRoutes');
 const grupoCursoRoutes = require('./routes/GrupoCursoRoutes');
 const usoImpresionRoutes = require('./routes/UsoImpresionRoutes');
 
+
 const app = express();
 // Se define el puerto que se usara, si no se define se usara el puerto 3000
 const PORT = process.env.PORT || 3000;

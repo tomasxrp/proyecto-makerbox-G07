@@ -35,7 +35,31 @@ const obtenerImpresiones = async (req, res) => {
   }
 };
 
+const cambiarEstadoImpresion = async (req, res) => {
+  try {
+    const { usuario } = req;
+    const { impresionId } = req.params;
+    const { estado } = req.body;
+
+    const impresionActualizada = await impresionService.cambiarEstadoImpresion(
+      usuario,
+      impresionId,
+      estado
+    );
+
+    res.status(200).json({
+      mensaje: 'Estado de impresión actualizado exitosamente',
+      impresion: impresionActualizada,
+    });
+  } catch (error) {
+    res.status(400).json({
+      mensaje: error.message || 'Error al cambiar estado de impresión',
+    });
+  }
+};
+
 module.exports = {
   crearImpresion,
+  cambiarEstadoImpresion,
   obtenerImpresiones,
 };
