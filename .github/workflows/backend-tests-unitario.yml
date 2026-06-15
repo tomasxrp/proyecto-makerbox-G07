@@ -49,7 +49,7 @@ jobs:
         run: npx prisma generate
 
       - name: Ejecutar pruebas unitarias y generar reporte de cobertura
-        run: npm run test:coverage -- tests/services/ tests/middlewares/
+        run: npm run test:coverage
         env:
           DATABASE_URL: postgresql://admin:admin123@localhost:5433/makerbox_db?schema=public
 

@@ -54,7 +54,7 @@ jobs:
           DATABASE_URL: postgresql://admin:admin123@localhost:5433/makerbox_db?schema=public
 
       - name: Ejecutar pruebas de integración y generar reporte de cobertura
-        run: npm run test:coverage -- tests/integration/
+        run: npm run test:integration:coverage
         env:
           DATABASE_URL: postgresql://admin:admin123@localhost:5433/makerbox_db?schema=public
           NODE_ENV: test
