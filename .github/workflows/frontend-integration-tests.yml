@@ -37,7 +37,7 @@ jobs:
         run: npm run build
 
       - name: Ejecutar pruebas con cobertura
-        run: npm run test:coverage
+        run: npm run test:integration
 
       - name: Subir cobertura a Codecov
         uses: codecov/codecov-action@v4
