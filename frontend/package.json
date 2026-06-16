@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:integration": "vitest run src/__tests__/integration --coverage"
   },
   "dependencies": {
     "axios": "^1.14.0",
