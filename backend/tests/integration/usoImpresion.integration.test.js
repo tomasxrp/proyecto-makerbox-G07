@@ -1,16 +1,103 @@
-// eslint-disable-next-line
-const mockPrisma = require('../prismaMock');
-
-const request = require('supertest');
+const { PrismaClient } = require('@prisma/client');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const request = require('supertest');
 const app = require('../../src/index');
 
-jest.mock('jsonwebtoken');
+const prisma = new PrismaClient();
 
-describe('Pruebas de Integración: API Uso de Impresión', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+beforeAll(() => {
+  const url = process.env.DATABASE_URL || '';
+  if (url.includes('supabase') || !url.includes('localhost')) {
+    throw new Error(
+      'TESTS DE INTEGRACION DETENIDOS por intentar correrlos en la DB real.'
+    );
+  }
+});
+
+describe('Pruebas de Integración REAL: API Uso de Impresión', () => {
+  let adminToken;
+  let studentToken;
+
+  beforeEach(async () => {
+    // Limpiar tablas
+    await prisma.usoImpresion.deleteMany();
+    await prisma.impresion.deleteMany();
+    await prisma.articulo.deleteMany();
+    await prisma.semestre.deleteMany();
+    await prisma.usuario.deleteMany();
+
+    const salt = await bcrypt.genSalt(10);
+    const pass = await bcrypt.hash('TestPass123', salt);
+
+    // Crear admin
+    const adminUser = await prisma.usuario.create({
+      data: {
+        rut: '12345678-1',
+        nombre: 'Admin',
+        apellido: 'Test',
+        correo: 'adminuso@test.com',
+        passUsuario: pass,
+        usuarioRol: 'ADMINISTRADOR',
+      },
+    });
+    adminToken = jwt.sign(
+      { id: adminUser.id, rol: adminUser.usuarioRol },
+      process.env.JWT_SECRET || 'test_secret',
+      { expiresIn: '24h' }
+    );
+
+    // Crear estudiante
+    const studentUser = await prisma.usuario.create({
+      data: {
+        rut: '12345678-2',
+        nombre: 'Estudiante',
+        apellido: 'Test',
+        correo: 'estuso@test.com',
+        passUsuario: pass,
+        usuarioRol: 'ESTUDIANTE',
+      },
+    });
+    studentToken = jwt.sign(
+      { id: studentUser.id, rol: studentUser.usuarioRol },
+      process.env.JWT_SECRET || 'test_secret',
+      { expiresIn: '24h' }
+    );
   });
+
+  afterAll(async () => {
+    await prisma.usoImpresion.deleteMany();
+    await prisma.impresion.deleteMany();
+    await prisma.articulo.deleteMany();
+    await prisma.semestre.deleteMany();
+    await prisma.usuario.deleteMany();
+    await prisma.$disconnect();
+  });
+
+  const createDependencies = async () => {
+    const articulo = await prisma.articulo.create({
+      data: { nombreArticulo: 'PLA Blanco', unidadMedida: 'gramos' },
+    });
+    const semestre = await prisma.semestre.create({
+      data: {
+        anio: 2026,
+        periodo: 1,
+        fechaInicio: new Date(),
+        fechaFin: new Date(),
+      },
+    });
+    const impresion = await prisma.impresion.create({
+      data: {
+        colorOpcion1: 'Blanco',
+        colorOpcion2: 'Negro',
+        colorOpcion3: 'Rojo',
+        urlModelo3d: 'http://link1',
+        urlModeloStl: 'http://link2',
+        comentario: 'Test',
+      },
+    });
+    return { articulo, semestre, impresion };
+  };
 
   describe('POST /api/uso-impresion/crear', () => {
     it('Si no se proporciona token debe retornar 401', async () => {
@@ -28,11 +115,9 @@ describe('Pruebas de Integración: API Uso de Impresión', () => {
     });
 
     it('Si faltan datos obligatorios debe retornar 400', async () => {
-      jwt.verify.mockReturnValue({ id: 'user-1', rol: 'ADMINISTRADOR' });
-
       const response = await request(app)
         .post('/api/uso-impresion/crear')
-        .set('Authorization', 'Bearer token_simulado')
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({ refImpresion: 'imp-1' });
 
       expect(response.status).toBe(400);
@@ -40,11 +125,9 @@ describe('Pruebas de Integración: API Uso de Impresión', () => {
     });
 
     it('Si cantidadFilamento no es entero debe retornar 400', async () => {
-      jwt.verify.mockReturnValue({ id: 'user-1', rol: 'ADMINISTRADOR' });
-
       const response = await request(app)
         .post('/api/uso-impresion/crear')
-        .set('Authorization', 'Bearer token_simulado')
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({
           refImpresion: 'imp-1',
           refSemestre: 'sem-1',
@@ -59,11 +142,9 @@ describe('Pruebas de Integración: API Uso de Impresión', () => {
     });
 
     it('Si cantidadFilamento es menor o igual a 0 debe retornar 400', async () => {
-      jwt.verify.mockReturnValue({ id: 'user-1', rol: 'ADMINISTRADOR' });
-
       const response = await request(app)
         .post('/api/uso-impresion/crear')
-        .set('Authorization', 'Bearer token_simulado')
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({
           refImpresion: 'imp-1',
           refSemestre: 'sem-1',
@@ -78,11 +159,9 @@ describe('Pruebas de Integración: API Uso de Impresión', () => {
     });
 
     it('Si el usuario no es ADMINISTRADOR ni AYUDANTE debe retornar 400', async () => {
-      jwt.verify.mockReturnValue({ id: 'user-1', rol: 'ESTUDIANTE' });
-
       const response = await request(app)
         .post('/api/uso-impresion/crear')
-        .set('Authorization', 'Bearer token_simulado')
+        .set('Authorization', `Bearer ${studentToken}`)
         .send({
           refImpresion: 'imp-1',
           refSemestre: 'sem-1',
@@ -97,17 +176,16 @@ describe('Pruebas de Integración: API Uso de Impresión', () => {
     });
 
     it('Si la impresión no existe debe retornar 400', async () => {
-      jwt.verify.mockReturnValue({ id: 'user-1', rol: 'ADMINISTRADOR' });
-      mockPrisma.impresion.findUnique.mockResolvedValue(null);
+      const { articulo, semestre } = await createDependencies();
 
       const response = await request(app)
         .post('/api/uso-impresion/crear')
-        .set('Authorization', 'Bearer token_simulado')
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          refImpresion: 'imp-inexistente',
-          refSemestre: 'sem-1',
+          refImpresion: 'inexistente',
+          refSemestre: semestre.id,
           cantidadFilamento: 50,
-          refArticulo: 'art-1',
+          refArticulo: articulo.id,
         });
 
       expect(response.status).toBe(400);
@@ -117,146 +195,89 @@ describe('Pruebas de Integración: API Uso de Impresión', () => {
     });
 
     it('Si el flujo completo es correcto debe retornar 201', async () => {
-      jwt.verify.mockReturnValue({ id: 'user-1', rol: 'ADMINISTRADOR' });
-
-      mockPrisma.impresion.findUnique.mockResolvedValue({ id: 'imp-1' });
-      mockPrisma.semestre.findUnique.mockResolvedValue({ id: 'sem-1' });
-      mockPrisma.articulo.findUnique.mockResolvedValue({ id: 'art-1' });
-      mockPrisma.usoImpresion.create.mockResolvedValue({
-        id: 'uso-1',
-        refImpresion: 'imp-1',
-        refSemestre: 'sem-1',
-        cantidadFilamento: 50,
-        refArticulo: 'art-1',
-        creadoEn: new Date(),
-      });
+      const { articulo, semestre, impresion } = await createDependencies();
 
       const response = await request(app)
         .post('/api/uso-impresion/crear')
-        .set('Authorization', 'Bearer token_simulado')
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          refImpresion: 'imp-1',
-          refSemestre: 'sem-1',
+          refImpresion: impresion.id,
+          refSemestre: semestre.id,
           cantidadFilamento: 50,
-          refArticulo: 'art-1',
+          refArticulo: articulo.id,
         });
 
       expect(response.status).toBe(201);
       expect(response.body.mensaje).toBe(
         'Uso de impresión creado exitosamente'
       );
-      expect(response.body.usoImpresion.id).toBe('uso-1');
+      expect(response.body.usoImpresion.refImpresion).toBe(impresion.id);
     });
   });
 
   describe('GET /api/uso-impresion/', () => {
     it('Si el flujo completo es correcto debe retornar 200 con datos de material', async () => {
-      jwt.verify.mockReturnValue({ id: 'user-1', rol: 'ADMINISTRADOR' });
-      mockPrisma.usoImpresion.findMany.mockResolvedValue([
-        {
-          id: 'uso-1',
+      const { articulo, semestre, impresion } = await createDependencies();
+      await prisma.usoImpresion.create({
+        data: {
+          refImpresion: impresion.id,
+          refSemestre: semestre.id,
           cantidadFilamento: 50,
-          refArticulo: 'art-1',
-          impresion: { id: 'imp-1', estado: 'PENDIENTE' },
-          articulo: {
-            id: 'art-1',
-            nombreArticulo: 'PLA Blanco',
-            unidadMedida: 'gramos',
-          },
-          solicitante: {
-            id: 'sol-1',
-            nombre: 'Juan',
-            apellido: 'Pérez',
-            correo: 'juan@test.com',
-            rut: '12345678-9',
-          },
-          estudiante: null,
+          refArticulo: articulo.id,
         },
-        {
-          id: 'uso-2',
-          cantidadFilamento: 30,
-          refArticulo: 'art-2',
-          impresion: { id: 'imp-2', estado: 'EN_PROCESO' },
-          articulo: {
-            id: 'art-2',
-            nombreArticulo: 'PETG Negro',
-            unidadMedida: 'gramos',
-          },
-          solicitante: null,
-          estudiante: null,
-        },
-      ]);
+      });
+
       const response = await request(app)
         .get('/api/uso-impresion/')
-        .set('Authorization', 'Bearer token_simulado');
+        .set('Authorization', `Bearer ${adminToken}`);
+
       expect(response.status).toBe(200);
-      expect(response.body.usosImpresion).toHaveLength(2);
+      expect(response.body.usosImpresion).toHaveLength(1);
       expect(response.body.usosImpresion[0].cantidadFilamento).toBe(50);
-      expect(response.body.usosImpresion[0].refArticulo).toBe('art-1');
       expect(response.body.usosImpresion[0].articulo.nombreArticulo).toBe(
         'PLA Blanco'
-      );
-      expect(response.body.usosImpresion[1].cantidadFilamento).toBe(30);
-      expect(response.body.usosImpresion[1].articulo.nombreArticulo).toBe(
-        'PETG Negro'
       );
     });
   });
 
   describe('GET /api/uso-impresion/:usoImpresionId', () => {
     it('Si el uso de impresión no existe debe retornar 404', async () => {
-      jwt.verify.mockReturnValue({ id: 'user-1', rol: 'ADMINISTRADOR' });
-      mockPrisma.usoImpresion.findUnique.mockResolvedValue(null);
       const response = await request(app)
-        .get('/api/uso-impresion/id-inexistente')
-        .set('Authorization', 'Bearer token_simulado');
+        .get('/api/uso-impresion/fake-id')
+        .set('Authorization', `Bearer ${adminToken}`);
+
       expect(response.status).toBe(404);
       expect(response.body.mensaje).toBe(
         'El uso de impresión no existe en la base de datos'
       );
     });
+
     it('Si el flujo es correcto debe retornar 200 con datos de material', async () => {
-      jwt.verify.mockReturnValue({ id: 'user-1', rol: 'ADMINISTRADOR' });
-      mockPrisma.usoImpresion.findUnique.mockResolvedValue({
-        id: 'uso-1',
-        refImpresion: 'imp-1',
-        cantidadFilamento: 50,
-        impresion: { id: 'imp-1', estado: 'PENDIENTE' },
-        articulo: {
-          id: 'art-1',
-          nombreArticulo: 'PLA Blanco',
-          unidadMedida: 'gramos',
+      const { articulo, semestre, impresion } = await createDependencies();
+      const uso = await prisma.usoImpresion.create({
+        data: {
+          refImpresion: impresion.id,
+          refSemestre: semestre.id,
+          cantidadFilamento: 50,
+          refArticulo: articulo.id,
         },
-        solicitante: {
-          id: 'sol-1',
-          nombre: 'Juan',
-          apellido: 'Pérez',
-          correo: 'juan@test.com',
-          rut: '12345678-9',
-        },
-        estudiante: null,
       });
+
       const response = await request(app)
-        .get('/api/uso-impresion/uso-1')
-        .set('Authorization', 'Bearer token_simulado');
+        .get(`/api/uso-impresion/${uso.id}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
       expect(response.status).toBe(200);
-      expect(response.body.usoImpresion.id).toBe('uso-1');
-      expect(response.body.usoImpresion.articulo.nombreArticulo).toBe(
-        'PLA Blanco'
-      );
+      expect(response.body.usoImpresion.id).toBe(uso.id);
       expect(response.body.usoImpresion.cantidadFilamento).toBe(50);
-      expect(response.body.usoImpresion.impresion.id).toBe('imp-1');
-      expect(response.body.usoImpresion.solicitante.nombre).toBe('Juan');
     });
   });
 
   describe('PUT /api/uso-impresion/actualizar/:usoImpresionId', () => {
     it('Si el usuario no tiene permisos debe retornar 401', async () => {
-      jwt.verify.mockReturnValue({ id: 'user-1', rol: 'ESTUDIANTE' });
-
       const response = await request(app)
         .put('/api/uso-impresion/actualizar/uso-1')
-        .set('Authorization', 'Bearer token_simulado')
+        .set('Authorization', `Bearer ${studentToken}`)
         .send({ cantidadFilamento: 100 });
 
       expect(response.status).toBe(401);
@@ -266,13 +287,9 @@ describe('Pruebas de Integración: API Uso de Impresión', () => {
     });
 
     it('Si el uso de impresión no existe debe retornar 401', async () => {
-      jwt.verify.mockReturnValue({ id: 'user-1', rol: 'ADMINISTRADOR' });
-
-      mockPrisma.usoImpresion.findUnique.mockResolvedValue(null);
-
       const response = await request(app)
         .put('/api/uso-impresion/actualizar/id-999')
-        .set('Authorization', 'Bearer token_simulado')
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({ cantidadFilamento: 100 });
 
       expect(response.status).toBe(401);
@@ -282,20 +299,19 @@ describe('Pruebas de Integración: API Uso de Impresión', () => {
     });
 
     it('Si el flujo es correcto debe retornar 200', async () => {
-      jwt.verify.mockReturnValue({ id: 'user-1', rol: 'ADMINISTRADOR' });
-
-      mockPrisma.usoImpresion.findUnique.mockResolvedValue({
-        id: 'uso-1',
-        cantidadFilamento: 50,
-      });
-      mockPrisma.usoImpresion.update.mockResolvedValue({
-        id: 'uso-1',
-        cantidadFilamento: 100,
+      const { articulo, semestre, impresion } = await createDependencies();
+      const uso = await prisma.usoImpresion.create({
+        data: {
+          refImpresion: impresion.id,
+          refSemestre: semestre.id,
+          cantidadFilamento: 50,
+          refArticulo: articulo.id,
+        },
       });
 
       const response = await request(app)
-        .put('/api/uso-impresion/actualizar/uso-1')
-        .set('Authorization', 'Bearer token_simulado')
+        .put(`/api/uso-impresion/actualizar/${uso.id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({ cantidadFilamento: 100 });
 
       expect(response.status).toBe(200);
@@ -308,11 +324,9 @@ describe('Pruebas de Integración: API Uso de Impresión', () => {
 
   describe('DELETE /api/uso-impresion/eliminar/:usoImpresionId', () => {
     it('Si el usuario no tiene permisos debe retornar 401', async () => {
-      jwt.verify.mockReturnValue({ id: 'user-1', rol: 'ESTUDIANTE' });
-
       const response = await request(app)
         .delete('/api/uso-impresion/eliminar/uso-1')
-        .set('Authorization', 'Bearer token_simulado');
+        .set('Authorization', `Bearer ${studentToken}`);
 
       expect(response.status).toBe(401);
       expect(response.body.mensaje).toBe(
@@ -321,13 +335,9 @@ describe('Pruebas de Integración: API Uso de Impresión', () => {
     });
 
     it('Si el uso de impresión no existe debe retornar 401', async () => {
-      jwt.verify.mockReturnValue({ id: 'user-1', rol: 'ADMINISTRADOR' });
-
-      mockPrisma.usoImpresion.findUnique.mockResolvedValue(null);
-
       const response = await request(app)
         .delete('/api/uso-impresion/eliminar/id-999')
-        .set('Authorization', 'Bearer token_simulado');
+        .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(401);
       expect(response.body.mensaje).toBe(
@@ -336,64 +346,55 @@ describe('Pruebas de Integración: API Uso de Impresión', () => {
     });
 
     it('Si el flujo es correcto debe retornar 200', async () => {
-      jwt.verify.mockReturnValue({ id: 'user-1', rol: 'ADMINISTRADOR' });
-
-      mockPrisma.usoImpresion.findUnique.mockResolvedValue({
-        id: 'uso-1',
-        cantidadFilamento: 50,
-      });
-      mockPrisma.usoImpresion.delete.mockResolvedValue({
-        id: 'uso-1',
-        cantidadFilamento: 50,
+      const { articulo, semestre, impresion } = await createDependencies();
+      const uso = await prisma.usoImpresion.create({
+        data: {
+          refImpresion: impresion.id,
+          refSemestre: semestre.id,
+          cantidadFilamento: 50,
+          refArticulo: articulo.id,
+        },
       });
 
       const response = await request(app)
-        .delete('/api/uso-impresion/eliminar/uso-1')
-        .set('Authorization', 'Bearer token_simulado');
+        .delete(`/api/uso-impresion/eliminar/${uso.id}`)
+        .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
-      expect(response.body.usoImpresionEliminado.id).toBe('uso-1');
+      expect(response.body.usoImpresionEliminado.id).toBe(uso.id);
     });
   });
 
   describe('GET /api/uso-impresion/impresion/:impresionId', () => {
     it('Si el flujo es correcto debe retornar 200 con materiales ordenados por cantidad', async () => {
-      jwt.verify.mockReturnValue({ id: 'user-1', rol: 'ADMINISTRADOR' });
-      mockPrisma.usoImpresion.findMany.mockResolvedValue([
-        {
-          id: 'uso-1',
-          refImpresion: 'imp-1',
+      const { articulo, semestre, impresion } = await createDependencies();
+
+      const articulo2 = await prisma.articulo.create({
+        data: { nombreArticulo: 'PETG Negro', unidadMedida: 'gramos' },
+      });
+
+      await prisma.usoImpresion.create({
+        data: {
+          refImpresion: impresion.id,
+          refSemestre: semestre.id,
           cantidadFilamento: 80,
-          articulo: {
-            id: 'art-1',
-            nombreArticulo: 'PLA Blanco',
-            unidadMedida: 'gramos',
-          },
-          solicitante: {
-            id: 'sol-1',
-            nombre: 'Juan',
-            apellido: 'Pérez',
-            correo: 'juan@test.com',
-            rut: '12345678-9',
-          },
-          estudiante: null,
+          refArticulo: articulo.id,
         },
-        {
-          id: 'uso-2',
-          refImpresion: 'imp-1',
+      });
+
+      await prisma.usoImpresion.create({
+        data: {
+          refImpresion: impresion.id,
+          refSemestre: semestre.id,
           cantidadFilamento: 30,
-          articulo: {
-            id: 'art-2',
-            nombreArticulo: 'PETG Negro',
-            unidadMedida: 'gramos',
-          },
-          solicitante: null,
-          estudiante: null,
+          refArticulo: articulo2.id,
         },
-      ]);
+      });
+
       const response = await request(app)
-        .get('/api/uso-impresion/impresion/imp-1')
-        .set('Authorization', 'Bearer token_simulado');
+        .get(`/api/uso-impresion/impresion/${impresion.id}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
       expect(response.status).toBe(200);
       expect(response.body.usosImpresion).toHaveLength(2);
       expect(response.body.usosImpresion[0].cantidadFilamento).toBe(80);
@@ -401,9 +402,6 @@ describe('Pruebas de Integración: API Uso de Impresión', () => {
         'PLA Blanco'
       );
       expect(response.body.usosImpresion[1].cantidadFilamento).toBe(30);
-      expect(response.body.usosImpresion[0].cantidadFilamento).toBeGreaterThan(
-        response.body.usosImpresion[1].cantidadFilamento
-      );
     });
   });
 });

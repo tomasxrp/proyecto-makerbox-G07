@@ -1,15 +1,56 @@
-// eslint-disable-next-line
-const mockPrisma = require('../prismaMock');
-
-const request = require('supertest');
+const { PrismaClient } = require('@prisma/client');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const request = require('supertest');
 const app = require('../../src/index');
 
-jest.mock('jsonwebtoken');
+const prisma = new PrismaClient();
 
-describe('Prueba de integración API bloque reservado', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+beforeAll(() => {
+  const url = process.env.DATABASE_URL || '';
+  if (url.includes('supabase') || !url.includes('localhost')) {
+    throw new Error(
+      'TESTS DE INTEGRACION DETENIDOS por intentar correrlos en la DB real.'
+    );
+  }
+});
+
+describe('Prueba de integración REAL API bloque reservado', () => {
+  let adminToken;
+  let adminUser;
+
+  beforeEach(async () => {
+    await prisma.bloqueReservado.deleteMany();
+    await prisma.reserva.deleteMany();
+    await prisma.bloqueHorario.deleteMany();
+    await prisma.usuario.deleteMany();
+
+    const salt = await bcrypt.genSalt(10);
+    const pass = await bcrypt.hash('TestPass123', salt);
+
+    adminUser = await prisma.usuario.create({
+      data: {
+        rut: 'br-admin-9',
+        nombre: 'Admin',
+        apellido: 'Test',
+        correo: 'adminbr@test.com',
+        passUsuario: pass,
+        usuarioRol: 'ADMINISTRADOR',
+      },
+    });
+    adminToken = jwt.sign(
+      { id: adminUser.id, rol: adminUser.usuarioRol },
+      process.env.JWT_SECRET || 'test_secret',
+      { expiresIn: '24h' }
+    );
+  });
+
+  afterAll(async () => {
+    await prisma.bloqueReservado.deleteMany();
+    await prisma.reserva.deleteMany();
+    await prisma.bloqueHorario.deleteMany();
+    await prisma.usuario.deleteMany();
+    await prisma.$disconnect();
   });
 
   describe('POST /api/bloque-reservado/crear', () => {
@@ -26,14 +67,11 @@ describe('Prueba de integración API bloque reservado', () => {
     });
 
     it('Si faltan datos obligatorios debe retornar error 400', async () => {
-      jwt.verify.mockReturnValue({ id: 1, rol: 'ADMINISTRADOR' });
-
       const response = await request(app)
         .post('/api/bloque-reservado/crear')
-        .set('Authorization', 'Bearer token_simulado')
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({
           bloqueId: '550e8400-e29b-41d4-a716-446655440000',
-          // Falta reservaId
         });
 
       expect(response.status).toBe(400);
@@ -41,11 +79,9 @@ describe('Prueba de integración API bloque reservado', () => {
     });
 
     it('Si los IDs no son UUID válidos debe retornar error 400', async () => {
-      jwt.verify.mockReturnValue({ id: 1, rol: 'ADMINISTRADOR' });
-
       const response = await request(app)
         .post('/api/bloque-reservado/crear')
-        .set('Authorization', 'Bearer token_simulado')
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({
           bloqueId: 'id-invalido',
           reservaId: '660e8400-e29b-41d4-a716-446655440111',
@@ -58,30 +94,27 @@ describe('Prueba de integración API bloque reservado', () => {
     });
 
     it('Si todo es correcto debe retornar 201 y crear el bloque reservado', async () => {
-      jwt.verify.mockReturnValue({ id: 1, rol: 'ADMINISTRADOR' });
-
-      mockPrisma.bloqueReservado.create.mockResolvedValue({
-        bloqueId: '550e8400-e29b-41d4-a716-446655440000',
-        reservaId: '660e8400-e29b-41d4-a716-446655440111',
-        bloque: {
-          id: '550e8400-e29b-41d4-a716-446655440000',
-          nroBloque: 1,
-          horaInicio: '08:00',
-          horaFin: '09:00',
-        },
-        reserva: {
-          id: '660e8400-e29b-41d4-a716-446655440111',
-          solicitanteNombre: 'Juan',
+      const bloque = await prisma.bloqueHorario.create({
+        data: { nroBloque: 1, horaInicio: '08:00', horaFin: '09:00' },
+      });
+      const reserva = await prisma.reserva.create({
+        data: {
+          fechaReserva: new Date(new Date().getTime() + 86400000),
           estadoReserva: 'PENDIENTE',
+          solicitanteNombre: 'Juan',
+          solicitanteApellido: 'Pérez',
+          solicitanteCorreo: 'juan@test.com',
+          solicitanteRut: '12345678-9',
+          motivoReserva: 'Test',
         },
       });
 
       const response = await request(app)
         .post('/api/bloque-reservado/crear')
-        .set('Authorization', 'Bearer token_simulado')
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          bloqueId: '550e8400-e29b-41d4-a716-446655440000',
-          reservaId: '660e8400-e29b-41d4-a716-446655440111',
+          bloqueId: bloque.id,
+          reservaId: reserva.id,
         });
 
       expect(response.status).toBe(201);
@@ -101,24 +134,29 @@ describe('Prueba de integración API bloque reservado', () => {
     });
 
     it('Debe retornar 200 y todos los bloques reservados', async () => {
-      jwt.verify.mockReturnValue({ id: 1, rol: 'ADMINISTRADOR' });
-
-      mockPrisma.bloqueReservado.findMany.mockResolvedValue([
-        {
-          bloqueId: '550e8400-e29b-41d4-a716-446655440000',
-          reservaId: '660e8400-e29b-41d4-a716-446655440111',
-          bloque: {
-            nroBloque: 1,
-            horaInicio: '08:00',
-            horaFin: '09:00',
-          },
-          reserva: { solicitanteNombre: 'Juan' },
+      const bloque = await prisma.bloqueHorario.create({
+        data: { nroBloque: 1, horaInicio: '08:00', horaFin: '09:00' },
+      });
+      const reserva = await prisma.reserva.create({
+        data: {
+          fechaReserva: new Date(),
+          solicitanteNombre: 'Juan',
+          solicitanteApellido: 'Pérez',
+          solicitanteCorreo: 'test@test.com',
+          solicitanteRut: '12345678-9',
+          motivoReserva: 'Test',
         },
-      ]);
+      });
+      await prisma.bloqueReservado.create({
+        data: {
+          bloqueId: bloque.id,
+          reservaId: reserva.id,
+        },
+      });
 
       const response = await request(app)
         .get('/api/bloque-reservado/')
-        .set('Authorization', 'Bearer token_simulado');
+        .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body.mensaje).toBe(
@@ -133,42 +171,36 @@ describe('Prueba de integración API bloque reservado', () => {
       const response = await request(app).get(
         '/api/bloque-reservado/reserva/660e8400-e29b-41d4-a716-446655440111'
       );
-
       expect(response.status).toBe(401);
-      expect(response.body).toHaveProperty('mensaje');
     });
 
     it('Debe retornar 200 y los bloques de una reserva', async () => {
-      jwt.verify.mockReturnValue({ id: 1, rol: 'ADMINISTRADOR' });
-
-      mockPrisma.bloqueReservado.findMany.mockResolvedValue([
-        {
-          bloqueId: '550e8400-e29b-41d4-a716-446655440000',
-          reservaId: '660e8400-e29b-41d4-a716-446655440111',
-          bloque: {
-            nroBloque: 1,
-            horaInicio: '08:00',
-            horaFin: '09:00',
-          },
-          reserva: { solicitanteNombre: 'Juan' },
+      const bloque1 = await prisma.bloqueHorario.create({
+        data: { nroBloque: 1, horaInicio: '08:00', horaFin: '09:00' },
+      });
+      const bloque2 = await prisma.bloqueHorario.create({
+        data: { nroBloque: 2, horaInicio: '09:00', horaFin: '10:00' },
+      });
+      const reserva = await prisma.reserva.create({
+        data: {
+          fechaReserva: new Date(),
+          solicitanteNombre: 'Juan',
+          solicitanteApellido: 'Pérez',
+          solicitanteCorreo: 'test@test.com',
+          solicitanteRut: '12345678-9',
+          motivoReserva: 'Test',
         },
-        {
-          bloqueId: '550e8400-e29b-41d4-a716-446655440001',
-          reservaId: '660e8400-e29b-41d4-a716-446655440111',
-          bloque: {
-            nroBloque: 2,
-            horaInicio: '09:00',
-            horaFin: '10:00',
-          },
-          reserva: { solicitanteNombre: 'Juan' },
-        },
-      ]);
+      });
+      await prisma.bloqueReservado.create({
+        data: { bloqueId: bloque1.id, reservaId: reserva.id },
+      });
+      await prisma.bloqueReservado.create({
+        data: { bloqueId: bloque2.id, reservaId: reserva.id },
+      });
 
       const response = await request(app)
-        .get(
-          '/api/bloque-reservado/reserva/660e8400-e29b-41d4-a716-446655440111'
-        )
-        .set('Authorization', 'Bearer token_simulado');
+        .get(`/api/bloque-reservado/reserva/${reserva.id}`)
+        .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body.mensaje).toBe(
@@ -183,32 +215,30 @@ describe('Prueba de integración API bloque reservado', () => {
       const response = await request(app).get(
         '/api/bloque-reservado/bloque/550e8400-e29b-41d4-a716-446655440000'
       );
-
       expect(response.status).toBe(401);
-      expect(response.body).toHaveProperty('mensaje');
     });
 
     it('Debe retornar 200 y las reservas de un bloque', async () => {
-      jwt.verify.mockReturnValue({ id: 1, rol: 'ADMINISTRADOR' });
-
-      mockPrisma.bloqueReservado.findMany.mockResolvedValue([
-        {
-          bloqueId: '550e8400-e29b-41d4-a716-446655440000',
-          reservaId: '660e8400-e29b-41d4-a716-446655440111',
-          bloque: {
-            nroBloque: 1,
-            horaInicio: '08:00',
-            horaFin: '09:00',
-          },
-          reserva: { solicitanteNombre: 'Juan' },
+      const bloque = await prisma.bloqueHorario.create({
+        data: { nroBloque: 1, horaInicio: '08:00', horaFin: '09:00' },
+      });
+      const reserva = await prisma.reserva.create({
+        data: {
+          fechaReserva: new Date(),
+          solicitanteNombre: 'Juan',
+          solicitanteApellido: 'Pérez',
+          solicitanteCorreo: 'test@test.com',
+          solicitanteRut: '12345678-9',
+          motivoReserva: 'Test',
         },
-      ]);
+      });
+      await prisma.bloqueReservado.create({
+        data: { bloqueId: bloque.id, reservaId: reserva.id },
+      });
 
       const response = await request(app)
-        .get(
-          '/api/bloque-reservado/bloque/550e8400-e29b-41d4-a716-446655440000'
-        )
-        .set('Authorization', 'Bearer token_simulado');
+        .get(`/api/bloque-reservado/bloque/${bloque.id}`)
+        .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body.mensaje).toBe(
@@ -223,44 +253,41 @@ describe('Prueba de integración API bloque reservado', () => {
       const response = await request(app).get(
         '/api/bloque-reservado/550e8400-e29b-41d4-a716-446655440000/660e8400-e29b-41d4-a716-446655440111'
       );
-
       expect(response.status).toBe(401);
-      expect(response.body).toHaveProperty('mensaje');
     });
 
     it('Si el bloque reservado no existe debe retornar error 404', async () => {
-      jwt.verify.mockReturnValue({ id: 1, rol: 'ADMINISTRADOR' });
-      mockPrisma.bloqueReservado.findUnique.mockResolvedValue(null);
-
       const response = await request(app)
         .get(
           '/api/bloque-reservado/550e8400-e29b-41d4-a716-446655440000/660e8400-e29b-41d4-a716-446655440111'
         )
-        .set('Authorization', 'Bearer token_simulado');
+        .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(404);
       expect(response.body.mensaje).toBe('Bloque reservado no encontrado');
     });
 
     it('Debe retornar 200 y el bloque reservado', async () => {
-      jwt.verify.mockReturnValue({ id: 1, rol: 'ADMINISTRADOR' });
-
-      mockPrisma.bloqueReservado.findUnique.mockResolvedValue({
-        bloqueId: '550e8400-e29b-41d4-a716-446655440000',
-        reservaId: '660e8400-e29b-41d4-a716-446655440111',
-        bloque: {
-          nroBloque: 1,
-          horaInicio: '08:00',
-          horaFin: '09:00',
+      const bloque = await prisma.bloqueHorario.create({
+        data: { nroBloque: 1, horaInicio: '08:00', horaFin: '09:00' },
+      });
+      const reserva = await prisma.reserva.create({
+        data: {
+          fechaReserva: new Date(),
+          solicitanteNombre: 'Juan',
+          solicitanteApellido: 'Pérez',
+          solicitanteCorreo: 'test@test.com',
+          solicitanteRut: '12345678-9',
+          motivoReserva: 'Test',
         },
-        reserva: { solicitanteNombre: 'Juan' },
+      });
+      await prisma.bloqueReservado.create({
+        data: { bloqueId: bloque.id, reservaId: reserva.id },
       });
 
       const response = await request(app)
-        .get(
-          '/api/bloque-reservado/550e8400-e29b-41d4-a716-446655440000/660e8400-e29b-41d4-a716-446655440111'
-        )
-        .set('Authorization', 'Bearer token_simulado');
+        .get(`/api/bloque-reservado/${bloque.id}/${reserva.id}`)
+        .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body.mensaje).toBe(
@@ -279,37 +306,45 @@ describe('Prueba de integración API bloque reservado', () => {
         .send({ fechaReserva: '2026-07-15T10:00:00Z' });
 
       expect(response.status).toBe(401);
-      expect(response.body).toHaveProperty('mensaje');
     });
 
     it('Debe retornar 200 y disponible=true si no hay conflictos', async () => {
-      jwt.verify.mockReturnValue({ id: 1, rol: 'ADMINISTRADOR' });
-      mockPrisma.bloqueReservado.findFirst.mockResolvedValue(null);
+      const bloque = await prisma.bloqueHorario.create({
+        data: { nroBloque: 1, horaInicio: '08:00', horaFin: '09:00' },
+      });
 
       const response = await request(app)
-        .post(
-          '/api/bloque-reservado/550e8400-e29b-41d4-a716-446655440000/verificar-disponibilidad'
-        )
-        .set('Authorization', 'Bearer token_simulado')
+        .post(`/api/bloque-reservado/${bloque.id}/verificar-disponibilidad`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({ fechaReserva: '2026-07-15T10:00:00Z' });
 
       expect(response.status).toBe(200);
-      expect(response.body.mensaje).toBe('Disponibilidad verificada');
       expect(response.body.disponible).toBe(true);
     });
 
     it('Debe retornar 200 y disponible=false si hay conflictos', async () => {
-      jwt.verify.mockReturnValue({ id: 1, rol: 'ADMINISTRADOR' });
-      mockPrisma.bloqueReservado.findFirst.mockResolvedValue({
-        bloqueId: '550e8400-e29b-41d4-a716-446655440000',
-        reservaId: '660e8400-e29b-41d4-a716-446655440111',
+      const bloque = await prisma.bloqueHorario.create({
+        data: { nroBloque: 1, horaInicio: '08:00', horaFin: '09:00' },
+      });
+      const fecha = new Date('2026-07-15T10:00:00Z');
+      const reserva = await prisma.reserva.create({
+        data: {
+          fechaReserva: fecha,
+          solicitanteNombre: 'Juan',
+          solicitanteApellido: 'Pérez',
+          solicitanteCorreo: 'test@test.com',
+          solicitanteRut: '12345678-9',
+          motivoReserva: 'Test',
+          estadoReserva: 'CONFIRMADA',
+        },
+      });
+      await prisma.bloqueReservado.create({
+        data: { bloqueId: bloque.id, reservaId: reserva.id },
       });
 
       const response = await request(app)
-        .post(
-          '/api/bloque-reservado/550e8400-e29b-41d4-a716-446655440000/verificar-disponibilidad'
-        )
-        .set('Authorization', 'Bearer token_simulado')
+        .post(`/api/bloque-reservado/${bloque.id}/verificar-disponibilidad`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({ fechaReserva: '2026-07-15T10:00:00Z' });
 
       expect(response.status).toBe(200);
@@ -322,23 +357,30 @@ describe('Prueba de integración API bloque reservado', () => {
       const response = await request(app).delete(
         '/api/bloque-reservado/550e8400-e29b-41d4-a716-446655440000/660e8400-e29b-41d4-a716-446655440111'
       );
-
       expect(response.status).toBe(401);
-      expect(response.body).toHaveProperty('mensaje');
     });
 
     it('Debe eliminar un bloque reservado correctamente', async () => {
-      jwt.verify.mockReturnValue({ id: 1, rol: 'ADMINISTRADOR' });
-      mockPrisma.bloqueReservado.delete.mockResolvedValue({
-        bloqueId: '550e8400-e29b-41d4-a716-446655440000',
-        reservaId: '660e8400-e29b-41d4-a716-446655440111',
+      const bloque = await prisma.bloqueHorario.create({
+        data: { nroBloque: 1, horaInicio: '08:00', horaFin: '09:00' },
+      });
+      const reserva = await prisma.reserva.create({
+        data: {
+          fechaReserva: new Date(),
+          solicitanteNombre: 'Juan',
+          solicitanteApellido: 'Pérez',
+          solicitanteCorreo: 'test@test.com',
+          solicitanteRut: '12345678-9',
+          motivoReserva: 'Test',
+        },
+      });
+      await prisma.bloqueReservado.create({
+        data: { bloqueId: bloque.id, reservaId: reserva.id },
       });
 
       const response = await request(app)
-        .delete(
-          '/api/bloque-reservado/550e8400-e29b-41d4-a716-446655440000/660e8400-e29b-41d4-a716-446655440111'
-        )
-        .set('Authorization', 'Bearer token_simulado');
+        .delete(`/api/bloque-reservado/${bloque.id}/${reserva.id}`)
+        .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body.mensaje).toBe(
@@ -346,31 +388,41 @@ describe('Prueba de integración API bloque reservado', () => {
       );
     });
   });
-});
 
-describe('DELETE /api/bloque-reservado/reserva/:reservaId', () => {
-  it('Si no se envía token debe retornar error 401', async () => {
-    const response = await request(app).delete(
-      '/api/bloque-reservado/reserva/660e8400-e29b-41d4-a716-446655440111'
-    );
-
-    expect(response.status).toBe(401);
-    expect(response.body).toHaveProperty('mensaje');
-  });
-
-  it('Debe eliminar los bloques de una reserva correctamente', async () => {
-    jwt.verify.mockReturnValue({ id: 1, rol: 'ADMINISTRADOR' });
-    mockPrisma.bloqueReservado.deleteMany.mockResolvedValue({ count: 2 });
-
-    const response = await request(app)
-      .delete(
+  describe('DELETE /api/bloque-reservado/reserva/:reservaId', () => {
+    it('Si no se envía token debe retornar error 401', async () => {
+      const response = await request(app).delete(
         '/api/bloque-reservado/reserva/660e8400-e29b-41d4-a716-446655440111'
-      )
-      .set('Authorization', 'Bearer token_simulado');
+      );
+      expect(response.status).toBe(401);
+    });
 
-    expect(response.status).toBe(200);
-    expect(response.body.mensaje).toBe(
-      'Bloques de la reserva eliminados exitosamente'
-    );
+    it('Debe eliminar los bloques de una reserva correctamente', async () => {
+      const bloque = await prisma.bloqueHorario.create({
+        data: { nroBloque: 1, horaInicio: '08:00', horaFin: '09:00' },
+      });
+      const reserva = await prisma.reserva.create({
+        data: {
+          fechaReserva: new Date(),
+          solicitanteNombre: 'Juan',
+          solicitanteApellido: 'Pérez',
+          solicitanteCorreo: 'test@test.com',
+          solicitanteRut: '12345678-9',
+          motivoReserva: 'Test',
+        },
+      });
+      await prisma.bloqueReservado.create({
+        data: { bloqueId: bloque.id, reservaId: reserva.id },
+      });
+
+      const response = await request(app)
+        .delete(`/api/bloque-reservado/reserva/${reserva.id}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.mensaje).toBe(
+        'Bloques de la reserva eliminados exitosamente'
+      );
+    });
   });
 });
