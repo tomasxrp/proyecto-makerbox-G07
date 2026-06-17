@@ -1,18 +1,23 @@
 const { PrismaClient } = require('@prisma/client');
+const { parse } = require('csv-parse');
 
 const prisma = new PrismaClient();
 
+const tienePermiso = (usuario) => {
+  const rolUsuario = usuario.rol || usuario.usuarioRol;
+
+  return (
+    rolUsuario === 'ADMINISTRADOR' ||
+    rolUsuario === 'PROFESOR' ||
+    rolUsuario === 'AYUDANTE'
+  );
+};
+
 const asignarEstudianteACurso = async (usuario, refCurso, refEstudiante) => {
-  // validamos que el usuario tenga los permisos requeridos
-  if (
-    usuario.rol !== 'ADMINISTRADOR' &&
-    usuario.rol !== 'PROFESOR' &&
-    usuario.rol !== 'AYUDANTE'
-  ) {
+  if (!tienePermiso(usuario)) {
     throw new Error('Usuario no tiene los permisos necesarios.');
   }
 
-  // se crea la asignacion en la base de datos
   const nuevaAsignacion = await prisma.estudianteCurso.create({
     data: {
       refCurso,
@@ -23,8 +28,128 @@ const asignarEstudianteACurso = async (usuario, refCurso, refEstudiante) => {
   return nuevaAsignacion;
 };
 
+const cargarEstudiantesDesdeCsv = async (usuario, refCurso, archivoBuffer) => {
+  if (!tienePermiso(usuario)) {
+    throw new Error('Usuario no tiene los permisos necesarios.');
+  }
+
+  const registros = await new Promise((resolve, reject) => {
+    parse(
+      archivoBuffer,
+      {
+        columns: true,
+        skip_empty_lines: true,
+        trim: true,
+        bom: true,
+      },
+      (error, output) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(output);
+      }
+    );
+  });
+
+  const resultado = {
+    asignados: [],
+    noEncontrados: [],
+    yaAsignados: [],
+  };
+
+  const procesos = registros.map(async (registro) => {
+    const correo =
+      registro.correo ||
+      registro.email ||
+      registro['Dirección de correo'] ||
+      registro['Direccion de correo'];
+
+    if (!correo) {
+      return {
+        tipo: 'noEncontrados',
+        datos: {
+          fila: registro,
+          motivo: 'Correo no encontrado en la fila',
+        },
+      };
+    }
+
+    const estudiante = await prisma.usuario.findUnique({
+      where: {
+        correo,
+      },
+    });
+
+    if (estudiante && estudiante.usuarioRol !== 'ESTUDIANTE') {
+      return {
+        tipo: 'noEncontrados',
+        datos: {
+          correo,
+          motivo: 'El usuario existe, pero no tiene rol ESTUDIANTE',
+        },
+      };
+    }
+
+    if (!estudiante) {
+      return {
+        tipo: 'noEncontrados',
+        datos: {
+          correo,
+          motivo: 'Estudiante no existe en el sistema',
+        },
+      };
+    }
+
+    const asignacionExistente = await prisma.estudianteCurso.findUnique({
+      where: {
+        refCurso_refEstudiante: {
+          refCurso,
+          refEstudiante: estudiante.id,
+        },
+      },
+    });
+
+    if (asignacionExistente) {
+      return {
+        tipo: 'yaAsignados',
+        datos: {
+          correo,
+          nombre: estudiante.nombre,
+          apellido: estudiante.apellido,
+        },
+      };
+    }
+
+    const asignacion = await prisma.estudianteCurso.create({
+      data: {
+        refCurso,
+        refEstudiante: estudiante.id,
+      },
+    });
+
+    return {
+      tipo: 'asignados',
+      datos: {
+        correo,
+        nombre: estudiante.nombre,
+        apellido: estudiante.apellido,
+        asignacion,
+      },
+    };
+  });
+
+  const resultadosProcesados = await Promise.all(procesos);
+
+  resultadosProcesados.forEach((item) => {
+    resultado[item.tipo].push(item.datos);
+  });
+
+  return resultado;
+};
+
 const obtenerEstudiantesPorCurso = async (refCurso) => {
-  // obtenemos todos los estudiantes asignados a un curso especifico
   const estudiantes = await prisma.estudianteCurso.findMany({
     where: {
       refCurso,
@@ -33,11 +158,11 @@ const obtenerEstudiantesPorCurso = async (refCurso) => {
       estudiante: true,
     },
   });
+
   return estudiantes;
 };
 
 const obtenerCursosPorEstudiante = async (refEstudiante) => {
-  // obtenemos todos los cursos a los que pertenece un estudiante
   const cursos = await prisma.estudianteCurso.findMany({
     where: {
       refEstudiante,
@@ -46,20 +171,15 @@ const obtenerCursosPorEstudiante = async (refEstudiante) => {
       curso: true,
     },
   });
+
   return cursos;
 };
 
 const eliminarAsignacion = async (usuario, refCurso, refEstudiante) => {
-  // validamos que el usuario tenga los permisos requeridos
-  if (
-    usuario.rol !== 'ADMINISTRADOR' &&
-    usuario.rol !== 'PROFESOR' &&
-    usuario.rol !== 'AYUDANTE'
-  ) {
+  if (!tienePermiso(usuario)) {
     throw new Error('Usuario no tiene los permisos necesarios.');
   }
 
-  // buscamos si la asignacion especifica existe
   const asignacionEncontrada = await prisma.estudianteCurso.findUnique({
     where: {
       refCurso_refEstudiante: {
@@ -73,7 +193,6 @@ const eliminarAsignacion = async (usuario, refCurso, refEstudiante) => {
     throw new Error('La asignación no existe en la base de datos');
   }
 
-  // eliminamos la asignacion de la base de datos
   const asignacionEliminada = await prisma.estudianteCurso.delete({
     where: {
       refCurso_refEstudiante: {
@@ -88,6 +207,7 @@ const eliminarAsignacion = async (usuario, refCurso, refEstudiante) => {
 
 module.exports = {
   asignarEstudianteACurso,
+  cargarEstudiantesDesdeCsv,
   obtenerEstudiantesPorCurso,
   obtenerCursosPorEstudiante,
   eliminarAsignacion,
