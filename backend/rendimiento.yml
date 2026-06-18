@@ -1,0 +1,25 @@
+#Instrucciones para ejecutarlo
+#1. Dentro de carpeta backend ejecutar: npx artillery@1.7.9 run rendimiento.yml -o resultado-carga.json
+#2. Para generar HTML: npx artillery@1.7.9 report resultado-carga.json
+
+config:
+  target: 'https://proyecto-makerbox.onrender.com'
+  defaults:
+    headers:
+      Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjAwN2JlMmY1LTk0ZTMtNGFmNi05NWIzLWQ1N2RlMzE5NzExOSIsInJvbCI6IkFETUlOSVNUUkFET1IiLCJpYXQiOjE3ODE3OTMwNTksImV4cCI6MTc4MTg3OTQ1OX0.eaiZ0jcVa-pXgGoRFQ958NczwiIAf88YMISujaaG4rU'
+  phases:
+    - duration: 5
+      arrivalRate: 2
+      name: 'Fase 1: Calentamiento'
+    - duration: 30
+      arrivalRate: 10
+      name: 'Fase 2: Prueba de carga (10 usuarios)'
+
+scenarios:
+  - name: 'Flujo de lectura de Impresiones y Semestres'
+    flow:
+      - get:
+          url: '/api/impresion/'
+      - think: 1
+      - get:
+          url: '/api/semestre/'

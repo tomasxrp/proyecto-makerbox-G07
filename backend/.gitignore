@@ -9,6 +9,7 @@ backend/package-lock.json
 .env
 frontend/.env
 backend/.env
+backend/.env.test
 
 # Builds y coverage
 dist/

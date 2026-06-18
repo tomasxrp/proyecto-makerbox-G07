@@ -26,6 +26,7 @@
     "jsonwebtoken": "^9.0.3"
   },
   "devDependencies": {
+    "artillery": "^1.7.9",
     "cross-env": "^10.1.0",
     "eslint": "^8.57.1",
     "eslint-config-airbnb-base": "^15.0.0",
