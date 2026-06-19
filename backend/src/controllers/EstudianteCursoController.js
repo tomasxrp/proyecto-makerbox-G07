@@ -91,8 +91,43 @@ const eliminarAsignacion = async (req, res) => {
   }
 };
 
+const cargarEstudiantesDesdeCsv = async (req, res) => {
+  try {
+    const { refCurso } = req.body;
+    const { usuario } = req;
+
+    if (!refCurso) {
+      return res.status(400).json({
+        mensaje: 'El campo refCurso es obligatorio',
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        mensaje: 'Debe adjuntar un archivo CSV',
+      });
+    }
+
+    const resultado = await estudianteCursoService.cargarEstudiantesDesdeCsv(
+      usuario,
+      refCurso,
+      req.file.buffer
+    );
+
+    return res.status(200).json({
+      mensaje: 'Carga de estudiantes procesada exitosamente',
+      resultado,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      mensaje: error.message || 'Error al cargar estudiantes desde CSV',
+    });
+  }
+};
+
 module.exports = {
   asignarEstudianteACurso,
+  cargarEstudiantesDesdeCsv,
   obtenerEstudiantesPorCurso,
   obtenerCursosPorEstudiante,
   eliminarAsignacion,
