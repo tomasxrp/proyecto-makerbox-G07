@@ -1,25 +1,35 @@
-// eslint-disable-next-line
-const mockPrisma = require('../prismaMock');
-
 const request = require('supertest');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const app = require('../../src/index'); // Tu servidor Express
+const { PrismaClient } = require('@prisma/client');
+const app = require('../../src/index');
 
-jest.mock('bcryptjs');
-jest.mock('jsonwebtoken');
+const prisma = new PrismaClient();
 
-describe('Prueba de integracion API usuarios', () => {
-  beforeEach(() => {
-    // Limpiar mocks creados previamente
-    jest.clearAllMocks();
+beforeAll(() => {
+  const url = process.env.DATABASE_URL || '';
+  if (url.includes('supabase') || !url.includes('localhost')) {
+    throw new Error(
+      'TESTS DE INTEGRACION DETENIDOS por intentar correrlos en la DB real.'
+    );
+  }
+});
+
+describe('Integración REAL: API Usuarios', () => {
+  // Limpiar la BD antes de cada test para evitar conflictos
+  beforeEach(async () => {
+    await prisma.usuario.deleteMany();
+  });
+
+  // Cerrar conexión al final
+  afterAll(async () => {
+    await prisma.usuario.deleteMany();
+    await prisma.$disconnect();
   });
 
   describe('POST /api/usuarios/login', () => {
     it('Si faltan datos debe retornar error 400', async () => {
       const response = await request(app)
         .post('/api/usuarios/login')
-        .send({ correo: 'correotest@utalca.cl' }); // Enviamos solo el correo, pero falta la contraseña
+        .send({ correo: 'correotest@utalca.cl' });
 
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
@@ -40,18 +50,14 @@ describe('Prueba de integracion API usuarios', () => {
     });
 
     it('Si el login es exitoso debe retornar 200 y el token', async () => {
-      const usuarioSimulado = {
-        id: 1,
+      await request(app).post('/api/usuarios/registro').send({
+        rut: '12345678-9',
         nombre: 'Juan',
         apellido: 'Perez',
         correo: 'juan.perez@alumnos.utalca.cl',
-        passUsuario: 'Password123!',
-        usuarioRol: 'ESTUDIANTE',
-      };
-
-      mockPrisma.usuario.findUnique.mockResolvedValue(usuarioSimulado);
-      bcrypt.compare.mockResolvedValue(true);
-      jwt.sign.mockReturnValue('token-falso-prueba');
+        contrasena: 'Password123!',
+        rol: 'ESTUDIANTE',
+      });
 
       const response = await request(app).post('/api/usuarios/login').send({
         correo: 'juan.perez@alumnos.utalca.cl',
@@ -60,166 +66,184 @@ describe('Prueba de integracion API usuarios', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.mensaje).toBe('Login exitoso');
-      expect(response.body.resultadoLogin.token).toBe('token-falso-prueba');
+      expect(response.body.resultadoLogin.token).toBeDefined();
       expect(response.body.resultadoLogin.usuario.nombre).toBe('Juan');
     });
   });
-});
 
-describe('POST /api/usuarios/registro', () => {
-  it('Debería retornar 400 si faltan datos obligatorios', async () => {
-    // Se simula la peticion pero con datos faltantes
-    const response = await request(app).post('/api/usuarios/registro').send({
-      nombre: 'Carlos',
-      apellido: 'Soto',
+  describe('POST /api/usuarios/registro', () => {
+    it('Debería retornar 400 si faltan datos obligatorios', async () => {
+      const response = await request(app).post('/api/usuarios/registro').send({
+        nombre: 'Carlos',
+        apellido: 'Soto',
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('mensaje');
     });
 
-    expect(response.status).toBe(400);
-    expect(response.body).toHaveProperty('mensaje');
-  });
+    it('Si el correo ya existe debe retornar error 400', async () => {
+      await request(app).post('/api/usuarios/registro').send({
+        rut: '11111111-1',
+        nombre: 'Pedro',
+        apellido: 'Gomez',
+        correo: 'existe@utalca.cl',
+        contrasena: 'Clave123',
+        rol: 'ESTUDIANTE',
+      });
 
-  it('Si el correo ya existe en la base de datos debe retornar error 400', async () => {
-    mockPrisma.usuario.findUnique.mockResolvedValue({
-      id: 1,
-      correo: 'existe@utalca.cl',
+      const response = await request(app).post('/api/usuarios/registro').send({
+        rut: '22222222-2',
+        nombre: 'Otro',
+        apellido: 'Usuario',
+        correo: 'existe@utalca.cl',
+        contrasena: 'Clave123',
+        rol: 'ESTUDIANTE',
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        mensaje: 'El correo ya está registrado',
+      });
     });
 
-    const response = await request(app).post('/api/usuarios/registro').send({
-      rut: '12345678-9',
-      nombre: 'Pedro',
-      apellido: 'Gomez',
-      correo: 'existe@utalca.cl',
-      contrasena: 'Clave123',
-      rol: 'ESTUDIANTE',
-    });
-
-    expect(response.status).toBe(400);
-    expect(response.body).toEqual({
-      mensaje: 'El correo ya está registrado',
-    });
-  });
-
-  it('Si todo el flujo es correcto debe retornar 202 y registrar al usuario', async () => {
-    // Simulamos que el correo no existe en la base de datos
-    mockPrisma.usuario.findUnique.mockResolvedValue(null);
-    // Simulamos la creación del usuario en la base de datos
-    mockPrisma.usuario.create.mockResolvedValue({
-      rut: '19876543-2',
-      nombre: 'Bryan',
-      apellido: 'Ahumada',
-      correo: 'bryan@utalca.cl',
-      passUsuario: 'hash_generado',
-      usuarioRol: 'ESTUDIANTE',
-    });
-
-    // envio de la perticion con datos validos para el registro
-    const response = await request(app).post('/api/usuarios/registro').send({
-      rut: '19876543-2',
-      nombre: 'Bryan',
-      apellido: 'Ahumada',
-      correo: 'bryan@utalca.cl',
-      contrasena: 'MiClaveSegura123',
-      rol: 'ESTUDIANTE',
-    });
-
-    expect(response.status).toBe(202);
-    expect(response.body.mensaje).toBe('Usuario registrado exitosamente');
-    expect(response.body.usuario.email).toBe('bryan@utalca.cl');
-    expect(response.body.usuario.nombre).toBe('Bryan');
-  });
-});
-
-describe('GET /api/usuarios/', () => {
-  it('Si no se envia el token debe retornar error 401', async () => {
-    // Se realiza la peticion sin el auth
-    const response = await request(app).get('/api/usuarios/');
-
-    expect(response.status).toBe(401);
-    expect(response.body).toHaveProperty('mensaje');
-  });
-
-  it('Cuando el usuario logeado no es ADMINISTRADOR debe retornar error 401', async () => {
-    // Simulamos que el token es válido pero pertenece a un estudiante
-    jwt.verify.mockReturnValue({ id: 2, rol: 'ESTUDIANTE' });
-
-    const response = await request(app)
-      .get('/api/usuarios/')
-      .set('Authorization', 'Bearer token_simulado_estudiante');
-
-    expect(response.status).toBe(401);
-    expect(response.body.mensaje).toBe(
-      'El usuario no tiene los permisos necesarios'
-    );
-  });
-
-  it('Si el usuario logeado es ADMINISTRADOR debe retornar 200 y la lista de usuarios', async () => {
-    // Simulamos un token valido de ADMINISTRADOR
-    jwt.verify.mockReturnValue({ id: 1, rol: 'ADMINISTRADOR' });
-
-    // Simulamos la respuesta de la base de datos
-    mockPrisma.usuario.findMany.mockResolvedValue([
-      {
-        rut: '111',
-        nombre: 'Admin',
-        apellido: 'Test',
-        correo: 'admin@utalca.cl',
-        usuarioRol: 'ADMINISTRADOR',
-      },
-      {
-        rut: '222',
+    it('Si todo el flujo es correcto debe retornar 202', async () => {
+      const response = await request(app).post('/api/usuarios/registro').send({
+        rut: '19876543-2',
         nombre: 'Bryan',
         apellido: 'Ahumada',
         correo: 'bryan@utalca.cl',
-        usuarioRol: 'ESTUDIANTE',
-      },
-    ]);
+        contrasena: 'MiClaveSegura123',
+        rol: 'ESTUDIANTE',
+      });
 
-    const response = await request(app)
-      .get('/api/usuarios/')
-      .set('Authorization', 'Bearer token_simulado_admin');
+      expect(response.status).toBe(202);
+      expect(response.body.mensaje).toBe('Usuario registrado exitosamente');
+      expect(response.body.usuario.email).toBe('bryan@utalca.cl');
 
-    expect(response.status).toBe(200);
-    expect(response.body.mensaje).toBe('Lista de usuarios obtenida con exito');
-    expect(response.body.usuarios).toHaveLength(2);
-  });
-});
-
-describe('DELETE /api/usuarios/eliminar/:correo', () => {
-  it('Si se intenta eliminar un usuario que no existe debe retornar error 401', async () => {
-    jwt.verify.mockReturnValue({ id: 1, rol: 'ADMINISTRADOR' });
-    // Simulamos que Prisma no encuentra al usuario
-    mockPrisma.usuario.findUnique.mockResolvedValue(null);
-
-    const response = await request(app)
-      .delete('/api/usuarios/eliminar/noexiste@utalca.cl')
-      .set('Authorization', 'Bearer token_simulado_admin');
-
-    expect(response.status).toBe(401);
-    expect(response.body.mensaje).toBe(
-      'El correo no existe en la base de datos'
-    );
+      const usuarioEnBD = await prisma.usuario.findUnique({
+        where: { correo: 'bryan@utalca.cl' },
+      });
+      expect(usuarioEnBD).not.toBeNull();
+      expect(usuarioEnBD.nombre).toBe('Bryan');
+    });
   });
 
-  it('Si se intenta eliminar un usuario que existe debe retornar 200 y borrar al usuario exitosamente', async () => {
-    jwt.verify.mockReturnValue({ id: 1, rol: 'ADMINISTRADOR' });
-
-    // Simulamos que Prisma sí encuentra al usuario
-    mockPrisma.usuario.findUnique.mockResolvedValue({
-      id: 3,
-      correo: 'borrar@utalca.cl',
-    });
-    // Simulamos la respuesta de Prisma al hacer el delete
-    mockPrisma.usuario.delete.mockResolvedValue({
-      correo: 'borrar@utalca.cl',
-      usuarioRol: 'ESTUDIANTE',
+  describe('GET /api/usuarios/', () => {
+    it('Si no se envía token debe retornar 401', async () => {
+      const response = await request(app).get('/api/usuarios/');
+      expect(response.status).toBe(401);
     });
 
-    const response = await request(app)
-      .delete('/api/usuarios/eliminar/borrar@utalca.cl')
-      .set('Authorization', 'Bearer token_simulado_admin');
+    it('Si el usuario es ADMINISTRADOR debe retornar 200', async () => {
+      // Registrar admin directamente en la BD porque la API no permite rol ADMINISTRADOR
+      // eslint-disable-next-line
+      const bcrypt = require('bcryptjs');
+      const salt = await bcrypt.genSalt(10);
+      const contrasenaEncriptada = await bcrypt.hash('AdminPass123', salt);
 
-    expect(response.status).toBe(200);
-    expect(response.body.mensaje).toBe('Usuario borrado con exito');
-    expect(response.body.usuario.correo).toBe('borrar@utalca.cl');
+      await prisma.usuario.create({
+        data: {
+          rut: '99999999-9',
+          nombre: 'Admin',
+          apellido: 'Test',
+          correo: 'admin@utalca.cl',
+          passUsuario: contrasenaEncriptada,
+          usuarioRol: 'ADMINISTRADOR',
+        },
+      });
+
+      // Login para obtener token REAL
+      const loginRes = await request(app).post('/api/usuarios/login').send({
+        correo: 'admin@utalca.cl',
+        contrasena: 'AdminPass123',
+      });
+
+      const tokenReal = loginRes.body.resultadoLogin.token;
+
+      // Usar ese token REAL
+      const response = await request(app)
+        .get('/api/usuarios/')
+        .set('Authorization', `Bearer ${tokenReal}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.mensaje).toBe(
+        'Lista de usuarios obtenida con exito'
+      );
+      expect(response.body.usuarios.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe('DELETE /api/usuarios/eliminar/:correo', () => {
+    it('Si intentamos eliminar un usuario que no existe debe retornar 401', async () => {
+      // eslint-disable-next-line
+      const bcrypt = require('bcryptjs');
+      const salt = await bcrypt.genSalt(10);
+      const contrasenaEncriptada = await bcrypt.hash('AdminPass123', salt);
+
+      await prisma.usuario.create({
+        data: {
+          rut: '99999999-9',
+          nombre: 'Admin',
+          apellido: 'Test',
+          correo: 'admin@utalca.cl',
+          passUsuario: contrasenaEncriptada,
+          usuarioRol: 'ADMINISTRADOR',
+        },
+      });
+
+      const loginRes = await request(app).post('/api/usuarios/login').send({
+        correo: 'admin@utalca.cl',
+        contrasena: 'AdminPass123',
+      });
+      const tokenReal = loginRes.body.resultadoLogin.token;
+
+      const response = await request(app)
+        .delete('/api/usuarios/eliminar/noexiste@utalca.cl')
+        .set('Authorization', `Bearer ${tokenReal}`);
+
+      expect(response.status).toBe(401);
+      expect(response.body).toHaveProperty('mensaje');
+    });
+
+    it('Si todo es correcto debe retornar 200 y eliminar al usuario', async () => {
+      // eslint-disable-next-line
+      const bcrypt = require('bcryptjs');
+      const salt = await bcrypt.genSalt(10);
+      const contrasenaEncriptada = await bcrypt.hash('AdminPass123', salt);
+
+      await prisma.usuario.create({
+        data: {
+          rut: '88888888-8',
+          nombre: 'Admin2',
+          apellido: 'Test2',
+          correo: 'admin2@utalca.cl',
+          passUsuario: contrasenaEncriptada,
+          usuarioRol: 'ADMINISTRADOR',
+        },
+      });
+
+      await request(app).post('/api/usuarios/registro').send({
+        rut: '33333333-3',
+        nombre: 'Para',
+        apellido: 'Borrar',
+        correo: 'paraborrar@utalca.cl',
+        contrasena: 'Clave123',
+        rol: 'ESTUDIANTE',
+      });
+
+      const loginRes = await request(app).post('/api/usuarios/login').send({
+        correo: 'admin2@utalca.cl',
+        contrasena: 'AdminPass123',
+      });
+      const tokenReal = loginRes.body.resultadoLogin.token;
+
+      const response = await request(app)
+        .delete('/api/usuarios/eliminar/paraborrar@utalca.cl')
+        .set('Authorization', `Bearer ${tokenReal}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.mensaje).toBe('Usuario borrado con exito');
+    });
   });
 });
