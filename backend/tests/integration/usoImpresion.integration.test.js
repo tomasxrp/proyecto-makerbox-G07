@@ -21,11 +21,14 @@ describe('Pruebas de Integración REAL: API Uso de Impresión', () => {
 
   beforeEach(async () => {
     // Limpiar tablas
-    await prisma.usoImpresion.deleteMany();
-    await prisma.impresion.deleteMany();
-    await prisma.articulo.deleteMany();
-    await prisma.semestre.deleteMany();
-    await prisma.usuario.deleteMany();
+    const url = process.env.DATABASE_URL || '';
+    if (!url.includes('supabase') && url.includes('localhost')) {
+      await prisma.usoImpresion.deleteMany();
+      await prisma.impresion.deleteMany();
+      await prisma.articulo.deleteMany();
+      await prisma.semestre.deleteMany();
+      await prisma.usuario.deleteMany();
+    }
 
     const salt = await bcrypt.genSalt(10);
     const pass = await bcrypt.hash('TestPass123', salt);
@@ -66,11 +69,14 @@ describe('Pruebas de Integración REAL: API Uso de Impresión', () => {
   });
 
   afterAll(async () => {
-    await prisma.usoImpresion.deleteMany();
-    await prisma.impresion.deleteMany();
-    await prisma.articulo.deleteMany();
-    await prisma.semestre.deleteMany();
-    await prisma.usuario.deleteMany();
+    const url = process.env.DATABASE_URL || '';
+    if (!url.includes('supabase') && url.includes('localhost')) {
+      await prisma.usoImpresion.deleteMany();
+      await prisma.impresion.deleteMany();
+      await prisma.articulo.deleteMany();
+      await prisma.semestre.deleteMany();
+      await prisma.usuario.deleteMany();
+    }
     await prisma.$disconnect();
   });
 

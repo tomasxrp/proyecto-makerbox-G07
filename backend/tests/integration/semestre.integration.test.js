@@ -60,8 +60,11 @@ describe('Pruebas de Integración REAL: API Semestres', () => {
   });
 
   afterAll(async () => {
-    await prisma.semestre.deleteMany();
-    await prisma.usuario.deleteMany();
+    const url = process.env.DATABASE_URL || '';
+    if (!url.includes('supabase') && url.includes('localhost')) {
+      await prisma.semestre.deleteMany();
+      await prisma.usuario.deleteMany();
+    }
     await prisma.$disconnect();
   });
 

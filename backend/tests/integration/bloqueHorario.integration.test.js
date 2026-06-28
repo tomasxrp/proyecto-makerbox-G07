@@ -78,9 +78,12 @@ describe('Prueba de integración REAL API bloques horarios', () => {
   });
 
   afterAll(async () => {
-    await prisma.bloqueReservado.deleteMany();
-    await prisma.bloqueHorario.deleteMany();
-    await prisma.usuario.deleteMany();
+    const url = process.env.DATABASE_URL || '';
+    if (!url.includes('supabase') && url.includes('localhost')) {
+      await prisma.bloqueReservado.deleteMany();
+      await prisma.bloqueHorario.deleteMany();
+      await prisma.usuario.deleteMany();
+    }
     await prisma.$disconnect();
   });
 

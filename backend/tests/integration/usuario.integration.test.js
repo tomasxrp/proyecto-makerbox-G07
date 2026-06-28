@@ -21,7 +21,10 @@ describe('Integración REAL: API Usuarios', () => {
 
   // Cerrar conexión al final
   afterAll(async () => {
-    await prisma.usuario.deleteMany();
+    const url = process.env.DATABASE_URL || '';
+    if (!url.includes('supabase') && url.includes('localhost')) {
+      await prisma.usuario.deleteMany();
+    }
     await prisma.$disconnect();
   });
 

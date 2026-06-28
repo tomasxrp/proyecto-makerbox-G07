@@ -84,11 +84,14 @@ describe('Prueba de integracion REAL API GrupoCurso', () => {
   });
 
   afterAll(async () => {
-    await prisma.grupoEstudiante.deleteMany();
-    await prisma.grupoCurso.deleteMany();
-    await prisma.curso.deleteMany();
-    await prisma.semestre.deleteMany();
-    await prisma.usuario.deleteMany();
+    const url = process.env.DATABASE_URL || '';
+    if (!url.includes('supabase') && url.includes('localhost')) {
+      await prisma.grupoEstudiante.deleteMany();
+      await prisma.grupoCurso.deleteMany();
+      await prisma.curso.deleteMany();
+      await prisma.semestre.deleteMany();
+      await prisma.usuario.deleteMany();
+    }
     await prisma.$disconnect();
   });
 

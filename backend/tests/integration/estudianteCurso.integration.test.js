@@ -96,10 +96,13 @@ describe('Prueba de integracion REAL API EstudianteCurso', () => {
   });
 
   afterAll(async () => {
-    await prisma.estudianteCurso.deleteMany();
-    await prisma.curso.deleteMany();
-    await prisma.semestre.deleteMany();
-    await prisma.usuario.deleteMany();
+    const url = process.env.DATABASE_URL || '';
+    if (!url.includes('supabase') && url.includes('localhost')) {
+      await prisma.estudianteCurso.deleteMany();
+      await prisma.curso.deleteMany();
+      await prisma.semestre.deleteMany();
+      await prisma.usuario.deleteMany();
+    }
     await prisma.$disconnect();
   });
 
