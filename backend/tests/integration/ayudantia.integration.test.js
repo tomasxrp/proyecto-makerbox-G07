@@ -184,7 +184,9 @@ describe('Prueba de integracion REAL API Ayudantia', () => {
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body.ayudantias)).toBe(true);
       expect(response.body.ayudantias.length).toBeGreaterThan(0);
-      expect(response.body.ayudantias[0].nombreAyudantia).toBe('Ayudantia Get');
+      expect(response.body.ayudantias[0].nombreAyudantia).toBe(
+        'Ayudantia Get Estudiante'
+      );
     });
 
     it('Debe obtener la lista de ayudantias (AYUDANTE)', async () => {
@@ -206,7 +208,9 @@ describe('Prueba de integracion REAL API Ayudantia', () => {
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body.ayudantias)).toBe(true);
       expect(response.body.ayudantias.length).toBeGreaterThan(0);
-      expect(response.body.ayudantias[0].nombreAyudantia).toBe('Ayudantia Get');
+      expect(response.body.ayudantias[0].nombreAyudantia).toBe(
+        'Ayudantia Get Ayudante'
+      );
     });
   });
 
@@ -250,7 +254,11 @@ describe('Prueba de integracion REAL API Ayudantia', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           nombreAyudantia: 'Ayudantia Actualizada',
+          refCurso: curso.id,
+          refAyudante: ayudanteUser.id,
+          horario: new Date('2026-07-15T15:00:00Z').toISOString(),
           cupoMaximo: 30,
+          estado: 'ACTIVA',
         });
 
       expect(response.status).toBe(200);
