@@ -31,20 +31,53 @@ const crearImpresion = async (usuario, datos) => {
 const obtenerImpresiones = async (usuario) => {
   const rolUsuario = usuario.rol || usuario.usuarioRol;
 
-  if (
-    rolUsuario === 'ADMINISTRADOR' ||
-    rolUsuario === 'AYUDANTE' ||
-    rolUsuario === 'ADMINISTRADOR' ||
-    usuario.rol === 'AYUDANTE'
-  ) {
+  // 1. ADMINISTRADOR: Puede ver todo el historial de la universidad
+  if (rolUsuario === 'ADMINISTRADOR') {
     return prisma.impresion.findMany({
       orderBy: { creadoEn: 'desc' },
     });
   }
 
-  if (usuario.usuarioRol === 'ESTUDIANTE' || usuario.rol === 'ESTUDIANTE') {
+  // 2. ESTUDIANTE o SOLICITANTE: Solo ven las solicitudes que ellos mismos crearon
+  if (rolUsuario === 'ESTUDIANTE' || rolUsuario === 'SOLICITANTE') {
     return prisma.impresion.findMany({
       where: { refEstudiante: usuario.id },
+      orderBy: { creadoEn: 'desc' },
+    });
+  }
+
+  // 3. PROFESOR: Solo ve solicitudes atadas a los cursos donde él es el profesor
+  if (rolUsuario === 'PROFESOR') {
+    return prisma.impresion.findMany({
+      where: {
+        curso: {
+          refProfesor: usuario.id,
+        },
+      },
+      orderBy: { creadoEn: 'desc' },
+    });
+  }
+
+  // 4. AYUDANTE: Solo ve solicitudes de los cursos en los que imparte ayudantías,
+  // o aquellas impresiones que ya tomó/tiene asignadas.
+  if (rolUsuario === 'AYUDANTE') {
+    return prisma.impresion.findMany({
+      where: {
+        OR: [
+          {
+            curso: {
+              ayudantias: {
+                some: {
+                  refAyudante: usuario.id,
+                },
+              },
+            },
+          },
+          {
+            refAyudante: usuario.id,
+          },
+        ],
+      },
       orderBy: { creadoEn: 'desc' },
     });
   }
