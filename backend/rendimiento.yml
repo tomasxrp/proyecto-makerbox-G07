@@ -6,7 +6,7 @@ config:
   target: 'https://proyecto-makerbox.onrender.com'
   defaults:
     headers:
-      Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjAwN2JlMmY1LTk0ZTMtNGFmNi05NWIzLWQ1N2RlMzE5NzExOSIsInJvbCI6IkFETUlOSVNUUkFET1IiLCJpYXQiOjE3ODE3OTMwNTksImV4cCI6MTc4MTg3OTQ1OX0.eaiZ0jcVa-pXgGoRFQ958NczwiIAf88YMISujaaG4rU'
+      Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNmYjU4MDk0LTU0YTktNDM1Yy1iNzQwLTBmMTg1NmJkODAzNCIsInJvbCI6IkFETUlOSVNUUkFET1IiLCJpYXQiOjE3ODI4NTQ0MTcsImV4cCI6MTc4Mjk0MDgxN30.RP0CCedufWTVRwAANDB-Jv9ltV-28e-zNpKIJsNDHB0'
   phases:
     - duration: 5
       arrivalRate: 2
