@@ -13,6 +13,7 @@ const estudianteCursoRoutes = require('./routes/EstudianteCursoRoutes');
 const grupoCursoRoutes = require('./routes/GrupoCursoRoutes');
 const usoImpresionRoutes = require('./routes/UsoImpresionRoutes');
 const ayudantiaRoutes = require('./routes/AyudantiaRoutes');
+const grupoEstudianteRoutes = require('./routes/GrupoEstudianteRoutes');
 
 const app = express();
 // Se define el puerto que se usara, si no se define se usara el puerto 3000
@@ -32,6 +33,7 @@ app.use('/api/estudiante-curso', estudianteCursoRoutes);
 app.use('/api/grupo-curso', grupoCursoRoutes);
 app.use('/api/uso-impresion', usoImpresionRoutes);
 app.use('/api/ayudantia', ayudantiaRoutes);
+app.use('/api/grupo-estudiante', grupoEstudianteRoutes);
 app.get('/', (req, res) => {
   res.send('Peticion GET recibida en el backend');
 });
