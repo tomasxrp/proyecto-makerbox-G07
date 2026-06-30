@@ -9,6 +9,12 @@ const crearMovimientoStock = async (datosNuevoMovimiento) => {
   return movimientoStock;
 };
 
+const obtenerMovimientosStock = async () => {
+  const movimientos = await prisma.movimientoStock.findMany();
+  return movimientos;
+};
+
 module.exports = {
   crearMovimientoStock,
+  obtenerMovimientosStock,
 };
