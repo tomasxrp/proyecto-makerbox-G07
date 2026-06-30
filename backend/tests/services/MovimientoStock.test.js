@@ -11,7 +11,7 @@ describe('MovimientoStockService', () => {
     };
 
     const movimientoEsperado = {
-      if: 'movimiento-123',
+      id: 'movimiento-123',
       ...datosNuevoMovimiento,
       stockResultante: 10,
     };
