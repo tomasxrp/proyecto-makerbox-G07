@@ -92,6 +92,7 @@ const mockPrisma = {
   },
   movimientoStock: {
     create: jest.fn(),
+    findMany: jest.fn(),
   },
 };
 
