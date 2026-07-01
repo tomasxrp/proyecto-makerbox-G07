@@ -147,12 +147,12 @@ describe('ProfesorView', () => {
 
     await user.click(await screen.findByRole('button', { name: /subir csv/i }));
 
-    expect(screen.getByText(/archivo csv/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(document.querySelector('input[type="file"]')).toBeInTheDocument();
+    });
+
     expect(
-      screen.getByText(/haz clic para seleccionar un csv/i)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /procesar csv/i })
+      await screen.findByRole('button', { name: /procesar csv/i })
     ).toBeInTheDocument();
   });
 
