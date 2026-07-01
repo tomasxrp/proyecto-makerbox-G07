@@ -199,29 +199,24 @@ export default function ProfesorView() {
                       <h4 className="font-semibold">Estudiantes del curso</h4>
 
                       <div className="mt-2 space-y-2">
-                        {estudiantesPorCurso[curso.id].length === 0 ? (
-                          <p className="text-sm text-gray-600">
-                            No hay estudiantes asignados.
-                          </p>
-                        ) : (
-                          estudiantesPorCurso[curso.id].map((item) => (
+                        {estudiantesPorCurso[curso.id]?.map((item) => {
+                          const estudiante = item.estudiante || item;
+
+                          return (
                             <div
-                              key={item.refEstudiante}
+                              key={estudiante.id || estudiante.correo}
                               className="rounded-lg border p-3 text-sm"
                             >
                               <p>
-                                <strong>Nombre:</strong>{' '}
-                                {item.estudiante.nombre}{' '}
-                                {item.estudiante.apellido}
+                                <strong>Nombre:</strong> {estudiante.nombre}{' '}
+                                {estudiante.apellido}
                               </p>
-
                               <p>
-                                <strong>Correo:</strong>{' '}
-                                {item.estudiante.correo}
+                                <strong>Correo:</strong> {estudiante.correo}
                               </p>
                             </div>
-                          ))
-                        )}
+                          );
+                        })}
                       </div>
                     </div>
                   )}
