@@ -4,6 +4,51 @@ const jwt = require('jsonwebtoken');
 
 const prisma = new PrismaClient();
 
+const encriptarContrasena = async (contrasena) => {
+  const salt = await bcrypt.genSalt(10);
+  return bcrypt.hash(contrasena, salt);
+};
+
+const vincularCursosPendientes = async (usuarioCreado) => {
+  if (usuarioCreado.usuarioRol !== 'ESTUDIANTE') {
+    return;
+  }
+
+  const pendientes = await prisma.estudianteCursoPendiente.findMany({
+    where: {
+      OR: [{ correo: usuarioCreado.correo }, { rut: usuarioCreado.rut }],
+    },
+  });
+
+  if (pendientes.length === 0) {
+    return;
+  }
+
+  await Promise.all(
+    pendientes.map((pendiente) =>
+      prisma.estudianteCurso.upsert({
+        where: {
+          refCurso_refEstudiante: {
+            refCurso: pendiente.refCurso,
+            refEstudiante: usuarioCreado.id,
+          },
+        },
+        update: {},
+        create: {
+          refCurso: pendiente.refCurso,
+          refEstudiante: usuarioCreado.id,
+        },
+      })
+    )
+  );
+
+  await prisma.estudianteCursoPendiente.deleteMany({
+    where: {
+      OR: [{ correo: usuarioCreado.correo }, { rut: usuarioCreado.rut }],
+    },
+  });
+};
+
 const registrarUsuario = async (
   rut,
   nombre,
@@ -24,8 +69,7 @@ const registrarUsuario = async (
   }
 
   // Encriptar la contrasena
-  const salt = await bcrypt.genSalt(10);
-  const contrasenaEncriptada = await bcrypt.hash(contrasena, salt);
+  const contrasenaEncriptada = await encriptarContrasena(contrasena);
 
   // Creacion del usuario en base de datos
   const nuevoUsuario = await prisma.usuario.create({
@@ -39,6 +83,8 @@ const registrarUsuario = async (
     },
   });
 
+  await vincularCursosPendientes(nuevoUsuario);
+
   const response = {
     rut: nuevoUsuario.rut,
     nombre: nuevoUsuario.nombre,
@@ -48,6 +94,58 @@ const registrarUsuario = async (
   };
 
   return response;
+};
+
+const crearUsuarioInterno = async (
+  usuario,
+  rut,
+  nombre,
+  apellido,
+  correo,
+  contrasena,
+  rol
+) => {
+  if (usuario.rol !== 'ADMINISTRADOR') {
+    throw new Error('Solo un administrador puede crear usuarios internos');
+  }
+
+  const rolesPermitidos = ['PROFESOR', 'AYUDANTE'];
+
+  if (!rolesPermitidos.includes(rol)) {
+    throw new Error('El admin solo puede crear PROFESOR o AYUDANTE');
+  }
+
+  const usuarioExistente = await prisma.usuario.findFirst({
+    where: {
+      OR: [{ correo }, { rut }],
+    },
+  });
+
+  if (usuarioExistente) {
+    throw new Error('El correo o rut ya está registrado');
+  }
+
+  const contrasenaEncriptada = await encriptarContrasena(contrasena);
+
+  const nuevoUsuario = await prisma.usuario.create({
+    data: {
+      rut,
+      nombre,
+      apellido,
+      correo,
+      passUsuario: contrasenaEncriptada,
+      usuarioRol: rol,
+    },
+  });
+
+  return {
+    id: nuevoUsuario.id,
+    rut: nuevoUsuario.rut,
+    nombre: nuevoUsuario.nombre,
+    apellido: nuevoUsuario.apellido,
+    correo: nuevoUsuario.correo,
+    rol: nuevoUsuario.usuarioRol,
+  };
 };
 
 const loginUsuario = async (correo, contrasena) => {
@@ -160,6 +258,7 @@ const ObtenerListaUsuarios = async (usuario) => {
 
   const listaUsuarios = await prisma.usuario.findMany({
     select: {
+      id: true,
       rut: true,
       nombre: true,
       apellido: true,
@@ -173,6 +272,7 @@ const ObtenerListaUsuarios = async (usuario) => {
 
 module.exports = {
   registrarUsuario,
+  crearUsuarioInterno,
   loginUsuario,
   eliminarUsuario,
   obtenerUsuarioPorCorreo,

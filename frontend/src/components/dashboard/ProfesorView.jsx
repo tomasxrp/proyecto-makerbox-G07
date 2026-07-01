@@ -5,10 +5,6 @@ const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 export default function ProfesorView() {
   const [cursos, setCursos] = useState([]);
-  const [semestres, setSemestres] = useState([]);
-  const [modalAbierta, setModalAbierta] = useState(false);
-  const [nombreCurso, setNombreCurso] = useState('');
-  const [refSemestre, setRefSemestre] = useState('');
   const [mensaje, setMensaje] = useState('');
   const [error, setError] = useState('');
   const [resultadoCarga, setResultadoCarga] = useState({});
@@ -17,6 +13,8 @@ export default function ProfesorView() {
   const [modalCsvAbierta, setModalCsvAbierta] = useState(false);
   const [cursoCsvSeleccionado, setCursoCsvSeleccionado] = useState(null);
   const [archivoCsv, setArchivoCsv] = useState(null);
+
+  const [cargandoCsv, setCargandoCsv] = useState(false);
 
   const token = localStorage.getItem('token');
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
@@ -34,53 +32,10 @@ export default function ProfesorView() {
 
     setCursos(cursosProfesor);
   }, [token, usuario.id]);
-
-  const cargarSemestres = useCallback(async () => {
-    const response = await axios.get(`${API_URL}/api/semestre`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    setSemestres(response.data.semestres || []);
-  }, [token]);
-
-  const cargarEstudiantesCurso = async (refCurso) => {
-    const response = await axios.get(
-      `${API_URL}/api/estudiante-curso/curso/${refCurso}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    setEstudiantesPorCurso((prev) => ({
-      ...prev,
-      [refCurso]: response.data.estudiantes || [],
-    }));
-  };
-
-  useEffect(() => {
-    if (token && usuario.id) {
-      cargarCursos();
-      cargarSemestres();
-    }
-  }, [token, usuario.id, cargarCursos, cargarSemestres]);
-
-  const crearCurso = async (e) => {
-    e.preventDefault();
-    setMensaje('');
-    setError('');
-
-    try {
-      await axios.post(
-        `${API_URL}/api/curso/crear`,
-        {
-          nombre: nombreCurso,
-          refSemestre,
-          refProfesor: usuario.id,
-        },
+  const cargarEstudiantesCurso = useCallback(
+    async (refCurso) => {
+      const response = await axios.get(
+        `${API_URL}/api/estudiante-curso/curso/${refCurso}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -88,16 +43,19 @@ export default function ProfesorView() {
         }
       );
 
-      setMensaje('Curso creado exitosamente');
-      setModalAbierta(false);
-      setNombreCurso('');
-      setRefSemestre('');
+      setEstudiantesPorCurso((prev) => ({
+        ...prev,
+        [refCurso]: response.data.estudiantes || [],
+      }));
+    },
+    [token]
+  );
 
-      await cargarCursos();
-    } catch (err) {
-      setError(err.response?.data?.mensaje || 'Error al crear el curso');
+  useEffect(() => {
+    if (token && usuario.id) {
+      cargarCursos();
     }
-  };
+  }, [token, usuario.id, cargarCursos]);
 
   const subirCsv = async () => {
     setMensaje('');
@@ -107,6 +65,8 @@ export default function ProfesorView() {
       setError('Debe seleccionar un archivo CSV');
       return;
     }
+
+    setCargandoCsv(true);
 
     const formData = new FormData();
     formData.append('refCurso', cursoCsvSeleccionado.id);
@@ -129,14 +89,23 @@ export default function ProfesorView() {
         [cursoCsvSeleccionado.id]: response.data.resultado,
       }));
 
-      setMensaje('CSV cargado exitosamente');
       await cargarEstudiantesCurso(cursoCsvSeleccionado.id);
 
+      setMensaje('CSV cargado exitosamente');
       setArchivoCsv(null);
       setModalCsvAbierta(false);
       setCursoCsvSeleccionado(null);
     } catch (err) {
-      setError(err.response?.data?.mensaje || 'Error al cargar CSV');
+      console.error('Error completo al cargar CSV:', err);
+      console.error('Respuesta backend:', err.response?.data);
+
+      setError(
+        err.response?.data?.mensaje ||
+          err.response?.data?.error ||
+          'Error al cargar CSV'
+      );
+    } finally {
+      setCargandoCsv(false);
     }
   };
 
@@ -147,21 +116,10 @@ export default function ProfesorView() {
           <div>
             <h2 className="text-xl font-bold">Mis cursos</h2>
             <p className="text-sm text-gray-600">
-              Revisa tus cursos, carga estudiantes y monitorea solicitudes.
+              Revisa tus cursos asignados, carga estudiantes y monitorea
+              solicitudes.
             </p>
           </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              setMensaje('');
-              setError('');
-              setModalAbierta(true);
-            }}
-            className="rounded-lg bg-primary px-4 py-3 font-semibold text-white"
-          >
-            Nuevo curso
-          </button>
         </div>
 
         {mensaje && <p className="mb-4 text-green-600">{mensaje}</p>}
@@ -169,7 +127,7 @@ export default function ProfesorView() {
 
         <div className="space-y-4">
           {cursos.length === 0 ? (
-            <p>No tienes cursos registrados.</p>
+            <p>No tienes cursos asignados.</p>
           ) : (
             cursos.map((curso) => (
               <article
@@ -201,7 +159,7 @@ export default function ProfesorView() {
                         setArchivoCsv(null);
                         setModalCsvAbierta(true);
                       }}
-                      className="rounded-lg bg-primary px-4 py-2 font-semibold text-white"
+                      className="rounded-lg bg-primary px-4 py-2 font-semibold text-white transition hover:scale-[1.02] hover:bg-primary-container focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                     >
                       Subir CSV
                     </button>
@@ -209,7 +167,7 @@ export default function ProfesorView() {
                     <button
                       type="button"
                       onClick={() => cargarEstudiantesCurso(curso.id)}
-                      className="rounded-lg border px-4 py-2 font-semibold"
+                      className="rounded-lg border px-4 py-2 font-semibold transition hover:scale-[1.02] hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                     >
                       Ver estudiantes
                     </button>
@@ -226,8 +184,12 @@ export default function ProfesorView() {
                         {resultadoCarga[curso.id].yaAsignados?.length || 0}
                       </p>
                       <p>
-                        No encontrados:{' '}
-                        {resultadoCarga[curso.id].noEncontrados?.length || 0}
+                        Pendientes:{' '}
+                        {resultadoCarga[curso.id].pendientes?.length || 0}
+                      </p>
+                      <p>
+                        No válidos:{' '}
+                        {resultadoCarga[curso.id].noValidos?.length || 0}
                       </p>
                     </div>
                   )}
@@ -328,64 +290,6 @@ export default function ProfesorView() {
         </div>
       </section>
 
-      {modalAbierta && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-lg">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold">Crear nuevo curso</h2>
-
-              <button
-                type="button"
-                onClick={() => setModalAbierta(false)}
-                className="text-2xl font-bold"
-              >
-                ×
-              </button>
-            </div>
-
-            <form onSubmit={crearCurso} className="grid grid-cols-1 gap-4">
-              <input
-                placeholder="Nombre del curso"
-                value={nombreCurso}
-                onChange={(e) => setNombreCurso(e.target.value)}
-                className="rounded-lg border p-3"
-                required
-              />
-
-              <select
-                value={refSemestre}
-                onChange={(e) => setRefSemestre(e.target.value)}
-                className="rounded-lg border p-3"
-                required
-              >
-                <option value="">Seleccionar semestre</option>
-                {semestres.map((semestre) => (
-                  <option key={semestre.id} value={semestre.id}>
-                    {semestre.anio} - Periodo {semestre.periodo}
-                  </option>
-                ))}
-              </select>
-
-              <div className="flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setModalAbierta(false)}
-                  className="rounded-lg border px-4 py-3 font-semibold"
-                >
-                  Cancelar
-                </button>
-
-                <button
-                  type="submit"
-                  className="rounded-lg bg-primary px-4 py-3 font-semibold text-white"
-                >
-                  Crear curso
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
       {modalCsvAbierta && cursoCsvSeleccionado && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-lg">
@@ -416,22 +320,45 @@ export default function ProfesorView() {
                 los estudiantes del curso.
               </p>
 
-              <input
-                type="file"
-                accept=".csv"
-                onChange={(e) => setArchivoCsv(e.target.files[0])}
-                className="w-full rounded-lg border p-3"
-              />
+              <div>
+                <p className="mb-2 block text-sm font-semibold text-gray-700">
+                  Archivo CSV
+                </p>
+
+                <label
+                  htmlFor="archivo-csv"
+                  className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-center transition hover:scale-[1.01] hover:border-primary hover:bg-primary/5 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2"
+                >
+                  <span className="text-sm font-semibold text-gray-700">
+                    {archivoCsv
+                      ? archivoCsv.name
+                      : 'Haz clic para seleccionar un CSV'}
+                  </span>
+
+                  <span className="mt-1 text-xs text-gray-500">
+                    Solo archivos .csv
+                  </span>
+                </label>
+
+                <input
+                  id="archivo-csv"
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => setArchivoCsv(e.target.files[0])}
+                  className="sr-only"
+                />
+              </div>
 
               <div className="flex justify-end gap-3">
                 <button
                   type="button"
+                  disabled={cargandoCsv}
                   onClick={() => {
                     setModalCsvAbierta(false);
                     setCursoCsvSeleccionado(null);
                     setArchivoCsv(null);
                   }}
-                  className="rounded-lg border px-4 py-3 font-semibold"
+                  className="rounded-lg border px-4 py-3 font-semibold transition hover:scale-[1.02] hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
                 >
                   Cancelar
                 </button>
@@ -439,9 +366,10 @@ export default function ProfesorView() {
                 <button
                   type="button"
                   onClick={subirCsv}
-                  className="rounded-lg bg-primary px-4 py-3 font-semibold text-white"
+                  disabled={cargandoCsv}
+                  className="rounded-lg bg-primary px-4 py-3 font-semibold text-white transition hover:scale-[1.02] hover:bg-primary-container focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
                 >
-                  Procesar CSV
+                  {cargandoCsv ? 'Procesando...' : 'Procesar CSV'}
                 </button>
               </div>
             </div>

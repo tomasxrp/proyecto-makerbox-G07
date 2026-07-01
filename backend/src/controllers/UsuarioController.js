@@ -27,6 +27,32 @@ const registrarUsuario = async (req, res) => {
   }
 };
 
+const crearUsuarioInterno = async (req, res) => {
+  try {
+    const { rut, nombre, apellido, correo, contrasena, rol } = req.body;
+    const { usuario } = req;
+
+    const nuevoUsuario = await usuarioService.crearUsuarioInterno(
+      usuario,
+      rut,
+      nombre,
+      apellido,
+      correo,
+      contrasena,
+      rol
+    );
+
+    res.status(201).json({
+      mensaje: 'Usuario interno creado exitosamente',
+      usuario: nuevoUsuario,
+    });
+  } catch (error) {
+    res.status(400).json({
+      mensaje: error.message || 'Error al crear usuario interno',
+    });
+  }
+};
+
 const loginUsuario = async (req, res) => {
   try {
     const { correo, contrasena } = req.body;
@@ -111,6 +137,7 @@ const ObtenerListaUsuarios = async (req, res) => {
 
 module.exports = {
   registrarUsuario,
+  crearUsuarioInterno,
   loginUsuario,
   eliminarUsuario,
   obtenerUsuarioPorCorreo,

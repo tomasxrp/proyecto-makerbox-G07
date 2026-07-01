@@ -66,19 +66,20 @@ model BloqueHorario {
 }
 
 model Curso {
-  id               String            @id @default(uuid())
-  nombre           String
-  refSemestre      String
-  refProfesor      String
-  borradoEn        DateTime?
-  creadoEn         DateTime          @default(now())
-  actualizadoEn    DateTime          @updatedAt
-  ayudantias       Ayudantia[]
-  profesor         Usuario           @relation(fields: [refProfesor], references: [id])
-  semestre         Semestre          @relation(fields: [refSemestre], references: [id])
-  estudianteCursos EstudianteCurso[]
-  grupoCursos      GrupoCurso[]
-  impresions       Impresion[]
+  id                    String                       @id @default(uuid())
+  nombre                String
+  refSemestre           String
+  refProfesor           String
+  borradoEn             DateTime?
+  creadoEn              DateTime                     @default(now())
+  actualizadoEn         DateTime                     @updatedAt
+  ayudantias            Ayudantia[]
+  profesor              Usuario                      @relation(fields: [refProfesor], references: [id])
+  semestre              Semestre                      @relation(fields: [refSemestre], references: [id])
+  estudianteCursos      EstudianteCurso[]
+  estudiantesPendientes EstudianteCursoPendiente[]
+  grupoCursos           GrupoCurso[]
+  impresions            Impresion[]
 }
 
 model EstudianteCurso {
@@ -88,6 +89,19 @@ model EstudianteCurso {
   estudiante    Usuario @relation(fields: [refEstudiante], references: [id])
 
   @@id([refCurso, refEstudiante])
+}
+model EstudianteCursoPendiente {
+  id        String   @id @default(uuid())
+  refCurso  String
+  rut       String?
+  correo    String
+  nombre    String?
+  apellido  String?
+  creadoEn  DateTime @default(now())
+
+  curso     Curso    @relation(fields: [refCurso], references: [id])
+
+  @@unique([refCurso, correo])
 }
 
 model GrupoCurso {
