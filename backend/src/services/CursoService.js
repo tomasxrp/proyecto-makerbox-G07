@@ -13,8 +13,34 @@ const tienePermisoGestionCurso = (usuario) => {
 };
 
 const crearCurso = async (usuario, nombre, refSemestre, refProfesor) => {
-  if (!tienePermisoGestionCurso(usuario)) {
-    throw new Error('Usuario no tiene los permisos necesarios.');
+  const rolUsuario = usuario.usuarioRol || usuario.rol;
+
+  if (rolUsuario !== 'ADMINISTRADOR') {
+    throw new Error('Solo un administrador puede crear cursos');
+  }
+
+  if (!nombre || !refSemestre || !refProfesor) {
+    throw new Error('Nombre, semestre y profesor son obligatorios');
+  }
+
+  const semestreEncontrado = await prisma.semestre.findUnique({
+    where: {
+      id: refSemestre,
+    },
+  });
+
+  if (!semestreEncontrado) {
+    throw new Error('El semestre no existe en la base de datos');
+  }
+
+  const profesorEncontrado = await prisma.usuario.findUnique({
+    where: {
+      id: refProfesor,
+    },
+  });
+
+  if (!profesorEncontrado || profesorEncontrado.usuarioRol !== 'PROFESOR') {
+    throw new Error('El profesor no existe o no tiene rol PROFESOR');
   }
 
   const nuevoCurso = await prisma.curso.create({

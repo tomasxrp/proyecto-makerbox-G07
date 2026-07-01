@@ -9,6 +9,7 @@ describe('CursoService', () => {
   describe('test para curso service', () => {
     it('Deberia dar error si el rol del usuario no es correcto', async () => {
       const usuarioEstudiante = { rol: 'ESTUDIANTE' };
+
       await expect(
         cursoService.crearCurso(
           usuarioEstudiante,
@@ -16,11 +17,25 @@ describe('CursoService', () => {
           'semestre-1',
           'profesor-1'
         )
-      ).rejects.toThrow('Usuario no tiene los permisos necesarios.');
+      ).rejects.toThrow('Solo un administrador puede crear cursos');
     });
 
-    it('Deberia crear un curso de manera correcta si el rol es AYUDANTE', async () => {
-      const usuarioAyudante = { rol: 'AYUDANTE' };
+    it('Deberia crear un curso de manera correcta si el rol es ADMINISTRADOR', async () => {
+      const usuarioAdmin = { rol: 'ADMINISTRADOR' };
+
+      const semestreMock = {
+        id: 'semestre-1',
+        anio: 2026,
+        periodo: 1,
+      };
+
+      const profesorMock = {
+        id: 'profesor-1',
+        nombre: 'Maria',
+        apellido: 'Torres',
+        usuarioRol: 'PROFESOR',
+      };
+
       const cursoMock = {
         id: 'curso-123',
         nombre: 'Curso de Prueba',
@@ -28,16 +43,38 @@ describe('CursoService', () => {
         refProfesor: 'profesor-1',
       };
 
+      mockPrisma.semestre.findUnique.mockResolvedValue(semestreMock);
+      mockPrisma.usuario.findUnique.mockResolvedValue(profesorMock);
       mockPrisma.curso.create.mockResolvedValue(cursoMock);
 
       const resultado = await cursoService.crearCurso(
-        usuarioAyudante,
+        usuarioAdmin,
         'Curso de Prueba',
         'semestre-1',
         'profesor-1'
       );
 
+      expect(mockPrisma.semestre.findUnique).toHaveBeenCalledWith({
+        where: {
+          id: 'semestre-1',
+        },
+      });
+
+      expect(mockPrisma.usuario.findUnique).toHaveBeenCalledWith({
+        where: {
+          id: 'profesor-1',
+        },
+      });
+
       expect(mockPrisma.curso.create).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.curso.create).toHaveBeenCalledWith({
+        data: {
+          nombre: 'Curso de Prueba',
+          refSemestre: 'semestre-1',
+          refProfesor: 'profesor-1',
+        },
+      });
+
       expect(resultado).toEqual(cursoMock);
     });
   });

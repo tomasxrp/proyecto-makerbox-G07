@@ -15,6 +15,7 @@ const mockPrisma = {
   usuario: {
     create: jest.fn(),
     findUnique: jest.fn(),
+    findFirst: jest.fn(),
     findMany: jest.fn(),
     delete: jest.fn(),
   },
@@ -50,11 +51,20 @@ const mockPrisma = {
   },
   estudianteCurso: {
     create: jest.fn(),
+    upsert: jest.fn(),
     findUnique: jest.fn(),
     findMany: jest.fn(),
     delete: jest.fn(),
     update: jest.fn(),
   },
+
+  estudianteCursoPendiente: {
+    create: jest.fn(),
+    upsert: jest.fn(),
+    findMany: jest.fn(),
+    deleteMany: jest.fn(),
+  },
+
   grupoCurso: {
     create: jest.fn(),
     findUnique: jest.fn(),

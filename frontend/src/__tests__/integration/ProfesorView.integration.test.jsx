@@ -26,6 +26,21 @@ describe('Integración frontend - flujo profesor', () => {
     );
 
     axios.get.mockImplementation((url) => {
+      if (url.includes('/api/estudiante-curso/curso/curso-1')) {
+        return Promise.resolve({
+          data: {
+            estudiantes: [
+              {
+                id: 'estudiante-1',
+                nombre: 'Juan',
+                apellido: 'Perez',
+                correo: 'juan@utalca.cl',
+              },
+            ],
+          },
+        });
+      }
+
       if (url.includes('/api/curso')) {
         return Promise.resolve({
           data: {
@@ -56,31 +71,28 @@ describe('Integración frontend - flujo profesor', () => {
         });
       }
 
-      if (url.includes('/api/semestre')) {
-        return Promise.resolve({
-          data: {
-            semestres: [
-              {
-                id: 'semestre-1',
-                anio: 2026,
-                periodo: 1,
-              },
-            ],
-          },
-        });
-      }
-
       return Promise.resolve({ data: {} });
     });
 
     axios.post.mockResolvedValue({
       data: {
-        mensaje: 'Curso creado exitosamente',
+        resultado: {
+          asignados: [
+            {
+              correo: 'juan@utalca.cl',
+              nombre: 'Juan',
+              apellido: 'Perez',
+            },
+          ],
+          pendientes: [],
+          yaAsignados: [],
+          noValidos: [],
+        },
       },
     });
   });
 
-  it('permite visualizar cursos y crear un nuevo curso', async () => {
+  it('permite visualizar cursos asignados y cargar estudiantes por CSV', async () => {
     const user = userEvent.setup();
 
     render(<ProfesorView />);
@@ -93,45 +105,50 @@ describe('Integración frontend - flujo profesor', () => {
 
     expect(screen.getByText(/prueba profesor/i)).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /nuevo curso/i }));
+    expect(
+      screen.queryByRole('button', { name: /nuevo curso/i })
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /subir csv/i }));
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('heading', {
-          name: /crear nuevo curso/i,
-        })
-      ).toBeInTheDocument();
+      expect(document.querySelector('input[type="file"]')).toBeInTheDocument();
     });
 
-    await user.type(
-      screen.getByPlaceholderText(/nombre del curso/i),
-      'Construccion de Software'
+    const archivo = new File(
+      ['correo,nombre\njuan@utalca.cl,Juan'],
+      'estudiantes.csv',
+      {
+        type: 'text/csv',
+      }
     );
 
-    await user.selectOptions(screen.getByRole('combobox'), 'semestre-1');
+    const inputArchivo = document.querySelector('input[type="file"]');
 
-    await user.click(
-      screen.getByRole('button', {
-        name: /crear curso/i,
-      })
-    );
+    await user.upload(inputArchivo, archivo);
+
+    await user.click(screen.getByRole('button', { name: /procesar csv/i }));
 
     await waitFor(() => {
       expect(axios.post).toHaveBeenCalled();
     });
 
-    expect(axios.post).toHaveBeenCalledWith(
-      `${API_URL}/api/curso/crear`,
-      {
-        nombre: 'Construccion de Software',
-        refSemestre: 'semestre-1',
-        refProfesor: 'profesor-1',
-      },
-      {
-        headers: {
-          Authorization: 'Bearer token-profesor',
-        },
-      }
+    const llamadaCsv = axios.post.mock.calls.find(([url]) =>
+      url.includes('/api/estudiante-curso/cargar-csv')
     );
+
+    expect(llamadaCsv).toBeTruthy();
+
+    const [url, formData, config] = llamadaCsv;
+
+    expect(url).toBe(`${API_URL}/api/estudiante-curso/cargar-csv`);
+    expect(formData.get('refCurso')).toBe('curso-1');
+    expect(formData.get('archivo')).toBe(archivo);
+    expect(config).toEqual({
+      headers: {
+        Authorization: 'Bearer token-profesor',
+        'Content-Type': 'multipart/form-data',
+      },
+    });
   });
 });

@@ -2,7 +2,6 @@ const cursoService = require('../services/CursoService');
 
 const crearCurso = async (req, res) => {
   try {
-    // extraemos la inforamacion del cursos desde el body
     const { nombre, refSemestre, refProfesor } = req.body;
     const { usuario } = req;
 
@@ -18,7 +17,7 @@ const crearCurso = async (req, res) => {
     });
   } catch (error) {
     res.status(401).json({
-      mensaje: error.message || 'Erro al tratar de crar el curso',
+      mensaje: error.message || 'Error al tratar de crear el curso',
     });
   }
 };
@@ -56,10 +55,7 @@ const eliminarCurso = async (req, res) => {
     const { cursoId } = req.params;
     const { usuario } = req;
 
-    const cursoEliminado = await cursoService.eliminarCurso(
-      usuario,
-      cursoId
-    );
+    const cursoEliminado = await cursoService.eliminarCurso(usuario, cursoId);
 
     res.status(200).json({
       cursoEliminado,

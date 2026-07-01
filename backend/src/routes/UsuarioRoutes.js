@@ -6,14 +6,21 @@ const { validarToken } = require('../middlewares/validarToken');
 
 const router = Router();
 
-// Definicion de las rutas
 router.post('/registro', validarRegistro, usuarioController.registrarUsuario);
 router.post('/login', validarLogin, usuarioController.loginUsuario);
+
+router.post(
+  '/admin/crear',
+  validarToken,
+  usuarioController.crearUsuarioInterno
+);
+
 router.delete(
   '/eliminar/:correo',
   validarToken,
   usuarioController.eliminarUsuario
 );
+
 router.get('/:correo', validarToken, usuarioController.obtenerUsuarioPorCorreo);
 router.get('/', validarToken, usuarioController.ObtenerListaUsuarios);
 

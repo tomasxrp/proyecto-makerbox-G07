@@ -28,9 +28,31 @@ const asignarEstudianteACurso = async (usuario, refCurso, refEstudiante) => {
   return nuevaAsignacion;
 };
 
+const obtenerValorCsv = (registro, posiblesColumnas) => {
+  const columnaEncontrada = posiblesColumnas.find(
+    (columna) => registro[columna]
+  );
+
+  if (!columnaEncontrada) {
+    return '';
+  }
+
+  return String(registro[columnaEncontrada]).trim();
+};
+
 const cargarEstudiantesDesdeCsv = async (usuario, refCurso, archivoBuffer) => {
   if (!tienePermiso(usuario)) {
     throw new Error('Usuario no tiene los permisos necesarios.');
+  }
+
+  const curso = await prisma.curso.findUnique({
+    where: {
+      id: refCurso,
+    },
+  });
+
+  if (!curso) {
+    throw new Error('El curso no existe');
   }
 
   const registros = await new Promise((resolve, reject) => {
@@ -55,51 +77,80 @@ const cargarEstudiantesDesdeCsv = async (usuario, refCurso, archivoBuffer) => {
 
   const resultado = {
     asignados: [],
-    noEncontrados: [],
+    pendientes: [],
     yaAsignados: [],
+    noValidos: [],
   };
 
-  const procesos = registros.map(async (registro) => {
-    const correo =
-      registro.correo ||
-      registro.email ||
-      registro['Dirección de correo'] ||
-      registro['Direccion de correo'];
+  const procesarRegistro = async (registro) => {
+    const correo = obtenerValorCsv(registro, [
+      'correo',
+      'email',
+      'Correo',
+      'Email',
+      'Dirección de correo',
+      'Direccion de correo',
+    ]);
+
+    const rut = obtenerValorCsv(registro, ['rut', 'RUT', 'Rut']);
+    const nombre = obtenerValorCsv(registro, ['nombre', 'Nombre']);
+    const apellido = obtenerValorCsv(registro, ['apellido', 'Apellido']);
 
     if (!correo) {
-      return {
-        tipo: 'noEncontrados',
-        datos: {
-          fila: registro,
-          motivo: 'Correo no encontrado en la fila',
-        },
-      };
+      resultado.noValidos.push({
+        fila: registro,
+        motivo: 'Correo no encontrado en la fila',
+      });
+      return;
     }
 
-    const estudiante = await prisma.usuario.findUnique({
+    const estudiante = await prisma.usuario.findFirst({
       where: {
-        correo,
+        OR: [{ correo }, ...(rut ? [{ rut }] : [])],
       },
     });
 
     if (estudiante && estudiante.usuarioRol !== 'ESTUDIANTE') {
-      return {
-        tipo: 'noEncontrados',
-        datos: {
-          correo,
-          motivo: 'El usuario existe, pero no tiene rol ESTUDIANTE',
-        },
-      };
+      resultado.noValidos.push({
+        correo,
+        rut,
+        motivo: 'El usuario existe, pero no tiene rol ESTUDIANTE',
+      });
+      return;
     }
 
     if (!estudiante) {
-      return {
-        tipo: 'noEncontrados',
-        datos: {
-          correo,
-          motivo: 'Estudiante no existe en el sistema',
+      const pendiente = await prisma.estudianteCursoPendiente.upsert({
+        where: {
+          refCurso_correo: {
+            refCurso,
+            correo,
+          },
         },
-      };
+        update: {
+          rut: rut || null,
+          nombre: nombre || null,
+          apellido: apellido || null,
+        },
+        create: {
+          refCurso,
+          rut: rut || null,
+          correo,
+          nombre: nombre || null,
+          apellido: apellido || null,
+        },
+      });
+
+      resultado.pendientes.push({
+        correo,
+        rut,
+        nombre,
+        apellido,
+        pendiente,
+        motivo:
+          'El estudiante aún no está registrado. Quedó pendiente para vincularse automáticamente al registrarse.',
+      });
+      return;
     }
 
     const asignacionExistente = await prisma.estudianteCurso.findUnique({
@@ -112,14 +163,12 @@ const cargarEstudiantesDesdeCsv = async (usuario, refCurso, archivoBuffer) => {
     });
 
     if (asignacionExistente) {
-      return {
-        tipo: 'yaAsignados',
-        datos: {
-          correo,
-          nombre: estudiante.nombre,
-          apellido: estudiante.apellido,
-        },
-      };
+      resultado.yaAsignados.push({
+        correo,
+        nombre: estudiante.nombre,
+        apellido: estudiante.apellido,
+      });
+      return;
     }
 
     const asignacion = await prisma.estudianteCurso.create({
@@ -129,22 +178,19 @@ const cargarEstudiantesDesdeCsv = async (usuario, refCurso, archivoBuffer) => {
       },
     });
 
-    return {
-      tipo: 'asignados',
-      datos: {
-        correo,
-        nombre: estudiante.nombre,
-        apellido: estudiante.apellido,
-        asignacion,
-      },
-    };
-  });
+    resultado.asignados.push({
+      correo,
+      nombre: estudiante.nombre,
+      apellido: estudiante.apellido,
+      asignacion,
+    });
+  };
 
-  const resultadosProcesados = await Promise.all(procesos);
-
-  resultadosProcesados.forEach((item) => {
-    resultado[item.tipo].push(item.datos);
-  });
+  await registros.reduce(
+    (promesaAnterior, registro) =>
+      promesaAnterior.then(() => procesarRegistro(registro)),
+    Promise.resolve()
+  );
 
   return resultado;
 };

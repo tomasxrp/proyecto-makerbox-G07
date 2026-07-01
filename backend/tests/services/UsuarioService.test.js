@@ -32,6 +32,10 @@ describe('UsuarioService', () => {
 
     it('Debería registrar un usuario correctamente', async () => {
       mockPrisma.usuario.findUnique.mockResolvedValue(null);
+      mockPrisma.estudianteCursoPendiente.findMany.mockResolvedValue([]);
+      mockPrisma.estudianteCursoPendiente.deleteMany.mockResolvedValue({
+        count: 0,
+      });
       bcrypt.genSalt.mockResolvedValue('salt');
       bcrypt.hash.mockResolvedValue('hashedPassword');
 
@@ -55,6 +59,9 @@ describe('UsuarioService', () => {
 
       expect(resultado.email).toBe('test@utalca.cl');
       expect(mockPrisma.usuario.create).toHaveBeenCalledTimes(1);
+      expect(
+        mockPrisma.estudianteCursoPendiente.findMany
+      ).toHaveBeenCalledTimes(1);
     });
   });
 
