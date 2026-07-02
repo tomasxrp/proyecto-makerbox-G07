@@ -1,4 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
+const { enviarCorreo } = require('./EmailService');
 
 const prisma = new PrismaClient();
 
@@ -25,6 +26,26 @@ const crearImpresion = async (usuario, datos) => {
       estado: 'PENDIENTE',
     },
   });
+
+  const usuarioDB = await prisma.usuario.findUnique({
+    where: { id: usuario.id }
+  });
+
+  console.log("=== DEBUG RESEND CREACION ===");
+  console.log("ID Usuario Token:", usuario.id);
+  console.log("Usuario DB encontrado:", usuarioDB ? `${usuarioDB.nombre} - ${usuarioDB.correo}` : "NULL");
+
+  if (usuarioDB && usuarioDB.correo) {
+    const asunto = 'Nueva Solicitud de Impresión Creada';
+    const mensaje = `<p>Hola, tu solicitud de impresión 3D ha sido creada exitosamente. Su estado actual es: <b>PENDIENTE</b>.</p>`;
+    console.log("Intentando enviar correo a:", usuarioDB.correo);
+    enviarCorreo(usuarioDB.correo, asunto, mensaje)
+      .then(res => console.log("✅ Correo enviado con éxito (Resend):", res))
+      .catch(err => console.error("❌ Error al enviar con Resend:", err));
+  } else {
+    console.log("⚠️ No se envió correo porque no se encontró el usuario en DB o no tiene correo.");
+  }
+  console.log("===============================");
 
   return nuevaImpresion;
 };
@@ -101,6 +122,7 @@ const cambiarEstadoImpresion = async (usuario, impresionId, nuevoEstado) => {
 
   const impresionExistente = await prisma.impresion.findUnique({
     where: { id: impresionId },
+    include: { estudiante: true },
   });
 
   if (!impresionExistente) {
@@ -121,6 +143,13 @@ const cambiarEstadoImpresion = async (usuario, impresionId, nuevoEstado) => {
       refAyudante: usuario.id,
     },
   });
+
+  const correoDestino = impresionExistente.estudiante ? impresionExistente.estudiante.correo : null;
+  if (correoDestino) {
+    const asunto = `Actualización de tu solicitud de Impresión`;
+    const mensaje = `<p>Hola, el estado de tu solicitud de impresión 3D ha cambiado a: <b>${nuevoEstado}</b>.</p>`;
+    enviarCorreo(correoDestino, asunto, mensaje);
+  }
 
   return impresionActualizada;
 };
