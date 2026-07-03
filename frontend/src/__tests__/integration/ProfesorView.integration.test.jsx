@@ -26,6 +26,28 @@ describe('Integración frontend - flujo profesor', () => {
     );
 
     axios.get.mockImplementation((url) => {
+      if (url.includes('/api/semestre')) {
+        return Promise.resolve({
+          data: {
+            semestres: [
+              {
+                id: 'semestre-1',
+                anio: 2026,
+                periodo: 1,
+              },
+            ],
+          },
+        });
+      }
+
+      if (url.includes('/api/grupo-curso/curso/curso-1')) {
+        return Promise.resolve({
+          data: {
+            grupos: [],
+          },
+        });
+      }
+
       if (url.includes('/api/estudiante-curso/curso/curso-1')) {
         return Promise.resolve({
           data: {
@@ -92,7 +114,7 @@ describe('Integración frontend - flujo profesor', () => {
     });
   });
 
-  it('permite visualizar cursos asignados y cargar estudiantes por CSV', async () => {
+  it('permite visualizar cursos asignados, crear curso y cargar CSV', async () => {
     const user = userEvent.setup();
 
     render(<ProfesorView />);
@@ -105,9 +127,27 @@ describe('Integración frontend - flujo profesor', () => {
 
     expect(screen.getByText(/prueba profesor/i)).toBeInTheDocument();
 
-    expect(
-      screen.queryByRole('button', { name: /nuevo curso/i })
-    ).not.toBeInTheDocument();
+    await user.type(
+      screen.getByPlaceholderText(/nombre del curso/i),
+      'Arquitectura de Software'
+    );
+    await user.selectOptions(screen.getByRole('combobox'), 'semestre-1');
+    await user.click(screen.getByRole('button', { name: /crear curso/i }));
+
+    await waitFor(() => {
+      expect(axios.post).toHaveBeenCalledWith(
+        `${API_URL}/api/curso/crear`,
+        {
+          nombre: 'Arquitectura de Software',
+          refSemestre: 'semestre-1',
+        },
+        {
+          headers: {
+            Authorization: 'Bearer token-profesor',
+          },
+        }
+      );
+    });
 
     await user.click(screen.getByRole('button', { name: /subir csv/i }));
 

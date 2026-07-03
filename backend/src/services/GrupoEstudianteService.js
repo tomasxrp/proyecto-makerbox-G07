@@ -17,6 +17,66 @@ const asignarEstudianteAGrupo = async (usuario, refGrupo, refEstudiante) => {
     throw new Error('Usuario no tiene los permisos necesarios.');
   }
 
+  const grupo = await prisma.grupoCurso.findUnique({
+    where: {
+      id: refGrupo,
+    },
+    select: {
+      id: true,
+      refCurso: true,
+    },
+  });
+
+  if (!grupo) {
+    throw new Error('El grupo no existe en la base de datos');
+  }
+
+  const estudiante = await prisma.usuario.findUnique({
+    where: {
+      id: refEstudiante,
+    },
+    select: {
+      id: true,
+      usuarioRol: true,
+    },
+  });
+
+  if (!estudiante) {
+    throw new Error(
+      'El estudiante seleccionado aún no está registrado en la plataforma'
+    );
+  }
+
+  if (estudiante.usuarioRol !== 'ESTUDIANTE') {
+    throw new Error('El usuario seleccionado no tiene rol ESTUDIANTE');
+  }
+
+  const inscripcionCurso = await prisma.estudianteCurso.findUnique({
+    where: {
+      refCurso_refEstudiante: {
+        refCurso: grupo.refCurso,
+        refEstudiante,
+      },
+    },
+  });
+
+  if (!inscripcionCurso) {
+    throw new Error('El estudiante no está inscrito en el curso de este grupo');
+  }
+
+  const asignacionExistente = await prisma.grupoEstudiante.findUnique({
+    where: {
+      refGrupo_refEstudiante: {
+        refGrupo,
+        refEstudiante,
+      },
+    },
+  });
+
+  if (asignacionExistente) {
+    throw new Error('El estudiante ya está asignado a este grupo');
+  }
+
   const nuevaAsignacion = await prisma.grupoEstudiante.create({
     data: {
       refGrupo,

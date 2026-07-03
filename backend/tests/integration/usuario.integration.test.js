@@ -90,7 +90,7 @@ describe('Integración REAL: API Usuarios', () => {
         rut: '11111111-1',
         nombre: 'Pedro',
         apellido: 'Gomez',
-        correo: 'existe@utalca.cl',
+        correo: 'existe@alumnos.utalca.cl',
         contrasena: 'Clave123',
         rol: 'ESTUDIANTE',
       });
@@ -99,7 +99,7 @@ describe('Integración REAL: API Usuarios', () => {
         rut: '22222222-2',
         nombre: 'Otro',
         apellido: 'Usuario',
-        correo: 'existe@utalca.cl',
+        correo: 'existe@alumnos.utalca.cl',
         contrasena: 'Clave123',
         rol: 'ESTUDIANTE',
       });
@@ -115,17 +115,17 @@ describe('Integración REAL: API Usuarios', () => {
         rut: '19876543-2',
         nombre: 'Bryan',
         apellido: 'Ahumada',
-        correo: 'bryan@utalca.cl',
+        correo: 'bryan@alumnos.utalca.cl',
         contrasena: 'MiClaveSegura123',
         rol: 'ESTUDIANTE',
       });
 
       expect(response.status).toBe(202);
       expect(response.body.mensaje).toBe('Usuario registrado exitosamente');
-      expect(response.body.usuario.email).toBe('bryan@utalca.cl');
+      expect(response.body.usuario.email).toBe('bryan@alumnos.utalca.cl');
 
       const usuarioEnBD = await prisma.usuario.findUnique({
-        where: { correo: 'bryan@utalca.cl' },
+        where: { correo: 'bryan@alumnos.utalca.cl' },
       });
       expect(usuarioEnBD).not.toBeNull();
       expect(usuarioEnBD.nombre).toBe('Bryan');
@@ -230,7 +230,7 @@ describe('Integración REAL: API Usuarios', () => {
         rut: '33333333-3',
         nombre: 'Para',
         apellido: 'Borrar',
-        correo: 'paraborrar@utalca.cl',
+        correo: 'paraborrar@alumnos.utalca.cl',
         contrasena: 'Clave123',
         rol: 'ESTUDIANTE',
       });
@@ -242,7 +242,7 @@ describe('Integración REAL: API Usuarios', () => {
       const tokenReal = loginRes.body.resultadoLogin.token;
 
       const response = await request(app)
-        .delete('/api/usuarios/eliminar/paraborrar@utalca.cl')
+        .delete('/api/usuarios/eliminar/paraborrar@alumnos.utalca.cl')
         .set('Authorization', `Bearer ${tokenReal}`);
 
       expect(response.status).toBe(200);

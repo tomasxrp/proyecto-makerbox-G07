@@ -1,6 +1,10 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const {
+  normalizarCorreo,
+  validarDominioCorreoPorRol,
+} = require('../utils/emailDomainPolicy');
 
 const prisma = new PrismaClient();
 
@@ -57,10 +61,17 @@ const registrarUsuario = async (
   contrasena,
   rol
 ) => {
+  const correoNormalizado = normalizarCorreo(correo);
+  const validacionDominio = validarDominioCorreoPorRol(correoNormalizado, rol);
+
+  if (!validacionDominio.esValido) {
+    throw new Error(validacionDominio.mensaje);
+  }
+
   // Verificar si el correo ya existe en la base de datos
   const usuarioExistente = await prisma.usuario.findUnique({
     where: {
-      correo,
+      correo: correoNormalizado,
     },
   });
 
@@ -77,7 +88,7 @@ const registrarUsuario = async (
       rut,
       nombre,
       apellido,
-      correo,
+      correo: correoNormalizado,
       passUsuario: contrasenaEncriptada,
       usuarioRol: rol,
     },
@@ -115,9 +126,16 @@ const crearUsuarioInterno = async (
     throw new Error('El admin solo puede crear PROFESOR o AYUDANTE');
   }
 
+  const correoNormalizado = normalizarCorreo(correo);
+  const validacionDominio = validarDominioCorreoPorRol(correoNormalizado, rol);
+
+  if (!validacionDominio.esValido) {
+    throw new Error(validacionDominio.mensaje);
+  }
+
   const usuarioExistente = await prisma.usuario.findFirst({
     where: {
-      OR: [{ correo }, { rut }],
+      OR: [{ correo: correoNormalizado }, { rut }],
     },
   });
 
@@ -132,7 +150,7 @@ const crearUsuarioInterno = async (
       rut,
       nombre,
       apellido,
-      correo,
+      correo: correoNormalizado,
       passUsuario: contrasenaEncriptada,
       usuarioRol: rol,
     },

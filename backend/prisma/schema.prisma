@@ -21,6 +21,7 @@ model Usuario {
   ayudantias              Ayudantia[]
   cursos                  Curso[]
   estudianteCursos        EstudianteCurso[]
+  cursoAyudantias         CursoAyudante[]
   grupoEstudiantes        GrupoEstudiante[]
   impresionesAyudante     Impresion[]            @relation("ImpresionAyudante")
   impresionesEstudiante   Impresion[]            @relation("ImpresionEstudiante")
@@ -74,6 +75,7 @@ model Curso {
   creadoEn              DateTime                     @default(now())
   actualizadoEn         DateTime                     @updatedAt
   ayudantias            Ayudantia[]
+  cursoAyudantes        CursoAyudante[]
   profesor              Usuario                      @relation(fields: [refProfesor], references: [id])
   semestre              Semestre                      @relation(fields: [refSemestre], references: [id])
   estudianteCursos      EstudianteCurso[]
@@ -90,6 +92,19 @@ model EstudianteCurso {
 
   @@id([refCurso, refEstudiante])
 }
+
+model CursoAyudante {
+  id            String   @id @default(uuid())
+  refCurso      String
+  refUsuario    String
+  creadoEn      DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+  curso         Curso    @relation(fields: [refCurso], references: [id])
+  usuario       Usuario  @relation(fields: [refUsuario], references: [id])
+
+  @@unique([refCurso, refUsuario])
+}
+
 model EstudianteCursoPendiente {
   id        String   @id @default(uuid())
   refCurso  String

@@ -159,6 +159,13 @@ describe('Prueba de integracion REAL API GrupoEstudiante', () => {
     });
 
     it('Si todo el flujo es correcto debe retornar 201 y asignar el estudiante', async () => {
+      await prisma.estudianteCurso.create({
+        data: {
+          refCurso: curso.id,
+          refEstudiante: estudianteUser.id,
+        },
+      });
+
       const response = await request(app)
         .post('/api/grupo-estudiante/asignar')
         .set('Authorization', `Bearer ${profesorToken}`)

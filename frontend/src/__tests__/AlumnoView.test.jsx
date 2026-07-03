@@ -11,11 +11,31 @@ describe('AlumnoView', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.setItem('token', 'token-123');
+    localStorage.setItem('usuario', JSON.stringify({ id: 'user-1' }));
 
-    axios.get.mockResolvedValue({
-      data: {
-        impresiones: [],
-      },
+    axios.get.mockImplementation((url) => {
+      if (url.includes('/api/impresion')) {
+        return Promise.resolve({ data: { impresiones: [] } });
+      }
+
+      if (url.includes('/api/curso/mis-cursos')) {
+        return Promise.resolve({
+          data: {
+            cursos: [
+              {
+                id: 'curso-1',
+                nombre: 'Sistema Operativo y Distribuido',
+              },
+            ],
+          },
+        });
+      }
+
+      if (url.includes('/api/ayudante/')) {
+        return Promise.resolve({ data: {} });
+      }
+
+      return Promise.resolve({ data: {} });
     });
   });
 
@@ -23,11 +43,13 @@ describe('AlumnoView', () => {
     render(<AlumnoView />);
 
     expect(
-      screen.getByRole('heading', { name: /mis solicitudes de impresión/i })
+      await screen.findByRole('heading', {
+        name: /mis cursos/i,
+      })
     ).toBeInTheDocument();
 
     expect(
-      screen.getByRole('button', { name: /nueva solicitud/i })
+      screen.getByRole('button', { name: /crear solicitud de impresión/i })
     ).toBeInTheDocument();
 
     await waitFor(() => {
@@ -40,7 +62,13 @@ describe('AlumnoView', () => {
 
     render(<AlumnoView />);
 
-    await user.click(screen.getByRole('button', { name: /nueva solicitud/i }));
+    await screen.findByRole('button', {
+      name: /crear solicitud de impresión/i,
+    });
+
+    await user.click(
+      screen.getByRole('button', { name: /crear solicitud de impresión/i })
+    );
 
     expect(
       screen.getByRole('heading', {
@@ -48,7 +76,9 @@ describe('AlumnoView', () => {
       })
     ).toBeInTheDocument();
 
-    expect(screen.getByText(/seleccionar curso/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/la solicitud quedará asociada a:/i)
+    ).toBeInTheDocument();
 
     expect(screen.getByPlaceholderText(/url archivo stl/i)).toBeInTheDocument();
   });

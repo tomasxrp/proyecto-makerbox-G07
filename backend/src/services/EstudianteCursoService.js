@@ -1,5 +1,9 @@
 const { PrismaClient } = require('@prisma/client');
 const { parse } = require('csv-parse');
+const {
+  normalizarCorreo,
+  validarDominioCorreoPorRol,
+} = require('../utils/emailDomainPolicy');
 
 const prisma = new PrismaClient();
 
@@ -83,7 +87,7 @@ const cargarEstudiantesDesdeCsv = async (usuario, refCurso, archivoBuffer) => {
   };
 
   const procesarRegistro = async (registro) => {
-    const correo = obtenerValorCsv(registro, [
+    const correoCrudo = obtenerValorCsv(registro, [
       'correo',
       'email',
       'Correo',
@@ -91,6 +95,7 @@ const cargarEstudiantesDesdeCsv = async (usuario, refCurso, archivoBuffer) => {
       'Dirección de correo',
       'Direccion de correo',
     ]);
+    const correo = normalizarCorreo(correoCrudo);
 
     const rut = obtenerValorCsv(registro, ['rut', 'RUT', 'Rut']);
     const nombre = obtenerValorCsv(registro, ['nombre', 'Nombre']);
@@ -100,6 +105,18 @@ const cargarEstudiantesDesdeCsv = async (usuario, refCurso, archivoBuffer) => {
       resultado.noValidos.push({
         fila: registro,
         motivo: 'Correo no encontrado en la fila',
+      });
+      return;
+    }
+
+    const validacionDominio = validarDominioCorreoPorRol(correo, 'ESTUDIANTE');
+    if (!validacionDominio.esValido) {
+      resultado.noValidos.push({
+        correo,
+        rut,
+        nombre,
+        apellido,
+        motivo: validacionDominio.mensaje,
       });
       return;
     }
@@ -196,16 +213,50 @@ const cargarEstudiantesDesdeCsv = async (usuario, refCurso, archivoBuffer) => {
 };
 
 const obtenerEstudiantesPorCurso = async (refCurso) => {
-  const estudiantes = await prisma.estudianteCurso.findMany({
-    where: {
-      refCurso,
-    },
-    include: {
-      estudiante: true,
-    },
-  });
+  const [asignaciones, pendientes] = await Promise.all([
+    prisma.estudianteCurso.findMany({
+      where: {
+        refCurso,
+      },
+      include: {
+        estudiante: true,
+      },
+    }),
+    prisma.estudianteCursoPendiente.findMany({
+      where: {
+        refCurso,
+      },
+      orderBy: {
+        creadoEn: 'desc',
+      },
+    }),
+  ]);
 
-  return estudiantes;
+  const estudiantesRegistrados = (asignaciones || []).map((asignacion) => ({
+    ...asignacion.estudiante,
+    esPendiente: false,
+  }));
+
+  const correosRegistrados = new Set(
+    estudiantesRegistrados
+      .map((estudiante) => normalizarCorreo(estudiante.correo))
+      .filter(Boolean)
+  );
+
+  const estudiantesPendientes = (pendientes || [])
+    .filter(
+      (pendiente) => !correosRegistrados.has(normalizarCorreo(pendiente.correo))
+    )
+    .map((pendiente) => ({
+      id: `pendiente-${pendiente.id}`,
+      nombre: pendiente.nombre || 'Sin nombre',
+      apellido: pendiente.apellido || '',
+      correo: pendiente.correo,
+      rut: pendiente.rut || '',
+      esPendiente: true,
+    }));
+
+  return [...estudiantesRegistrados, ...estudiantesPendientes];
 };
 
 const obtenerCursosPorEstudiante = async (refEstudiante) => {

@@ -1,24 +1,68 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const fromEmail = process.env.EMAIL_FROM || 'onboarding@resend.dev';
+const crearTransport = () => {
+  const host = process.env.SMTP_HOST;
+  const port = Number(process.env.SMTP_PORT || 587);
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  const secure = String(process.env.SMTP_SECURE || 'false') === 'true';
 
-const enviarCorreo = async (to, subject, html) => {
-  try {
-    const data = await resend.emails.send({
-      from: fromEmail,
-      to,
-      subject,
-      html,
-    });
-    return data;
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Error enviando correo:', error);
+  if (!host || !user || !pass) {
     return null;
   }
+
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure,
+    auth: {
+      user,
+      pass,
+    },
+  });
+};
+
+const enviarCorreoCambioEstadoSolicitud = async ({
+  destinatario,
+  nombreDestinatario,
+  estadoAnterior,
+  estadoNuevo,
+  nombreCurso,
+  solicitudId,
+  replyTo,
+  nombreRemitente,
+}) => {
+  const transport = crearTransport();
+
+  if (!transport) {
+    process.stdout.write(
+      '[EmailService] SMTP no configurado. Se omite envio de correo.\n'
+    );
+    return;
+  }
+
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+
+  await transport.sendMail({
+    from,
+    ...(replyTo ? { replyTo } : {}),
+    to: destinatario,
+    subject: `MakerBox: actualizacion de solicitud ${solicitudId}`,
+    text: [
+      `Hola ${nombreDestinatario || 'estudiante'},`,
+      '',
+      `Tu solicitud de impresion (${solicitudId}) del curso ${
+        nombreCurso || 'sin curso'
+      } cambio de estado:`,
+      `${estadoAnterior} -> ${estadoNuevo}`,
+      ...(nombreRemitente ? ['', `Actualizado por: ${nombreRemitente}`] : []),
+      '',
+      'Saludos,',
+      'Equipo MakerBox',
+    ].join('\n'),
+  });
 };
 
 module.exports = {
-  enviarCorreo,
+  enviarCorreoCambioEstadoSolicitud,
 };

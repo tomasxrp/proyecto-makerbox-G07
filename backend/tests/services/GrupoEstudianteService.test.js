@@ -25,6 +25,20 @@ describe('GrupoEstudianteService', () => {
         refEstudiante: 'estudiante-1',
       };
 
+      mockPrisma.grupoCurso.findUnique.mockResolvedValue({
+        id: 'grupo-1',
+        refCurso: 'curso-1',
+      });
+      mockPrisma.usuario.findUnique.mockResolvedValue({
+        id: 'estudiante-1',
+        usuarioRol: 'ESTUDIANTE',
+      });
+      mockPrisma.estudianteCurso.findUnique.mockResolvedValue({
+        refCurso: 'curso-1',
+        refEstudiante: 'estudiante-1',
+      });
+      mockPrisma.grupoEstudiante.findUnique.mockResolvedValue(null);
+
       mockPrisma.grupoEstudiante.create.mockResolvedValue(asignacionMock);
 
       const resultado = await grupoEstudianteService.asignarEstudianteAGrupo(
@@ -35,6 +49,26 @@ describe('GrupoEstudianteService', () => {
 
       expect(mockPrisma.grupoEstudiante.create).toHaveBeenCalledTimes(1);
       expect(resultado).toEqual(asignacionMock);
+    });
+
+    it('Deberia dar error si el estudiante no está registrado', async () => {
+      const usuarioProfe = { rol: 'PROFESOR' };
+
+      mockPrisma.grupoCurso.findUnique.mockResolvedValue({
+        id: 'grupo-1',
+        refCurso: 'curso-1',
+      });
+      mockPrisma.usuario.findUnique.mockResolvedValue(null);
+
+      await expect(
+        grupoEstudianteService.asignarEstudianteAGrupo(
+          usuarioProfe,
+          'grupo-1',
+          'pendiente-1'
+        )
+      ).rejects.toThrow(
+        'El estudiante seleccionado aún no está registrado en la plataforma'
+      );
     });
   });
 
