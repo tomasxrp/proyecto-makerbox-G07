@@ -13,7 +13,9 @@ const enviarCorreo = async (to, subject, html) => {
     });
     return data;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error enviando correo:', error);
+    return null;
   }
 };
 
