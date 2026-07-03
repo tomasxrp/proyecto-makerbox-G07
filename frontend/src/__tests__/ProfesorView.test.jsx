@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import axios from 'axios';
@@ -24,6 +24,41 @@ describe('ProfesorView', () => {
     );
 
     axios.get.mockImplementation((url) => {
+      if (url.includes('/api/semestre')) {
+        return Promise.resolve({
+          data: {
+            semestres: [
+              {
+                id: 'semestre-1',
+                anio: 2026,
+                periodo: 1,
+              },
+            ],
+          },
+        });
+      }
+
+      if (url.includes('/api/grupo-curso/curso/curso-1')) {
+        return Promise.resolve({
+          data: {
+            grupos: [
+              {
+                id: 'grupo-1',
+                nombreGrupo: 'Grupo A',
+              },
+            ],
+          },
+        });
+      }
+
+      if (url.includes('/api/grupo-estudiante/grupo/grupo-1')) {
+        return Promise.resolve({
+          data: {
+            estudiantes: [],
+          },
+        });
+      }
+
       if (url.includes('/api/estudiante-curso/curso/curso-1')) {
         return Promise.resolve({
           data: {
@@ -99,7 +134,7 @@ describe('ProfesorView', () => {
     render(<ProfesorView />);
 
     expect(
-      screen.getByRole('heading', { name: /mis cursos/i })
+      await screen.findByRole('heading', { name: /mis cursos/i })
     ).toBeInTheDocument();
 
     await waitFor(() => {
@@ -114,7 +149,9 @@ describe('ProfesorView', () => {
     expect(screen.getAllByText(/pendiente/i).length).toBeGreaterThan(0);
   });
 
-  it('no muestra el botón para crear cursos desde profesor', async () => {
+  it('permite crear cursos desde la vista profesor', async () => {
+    const user = userEvent.setup();
+
     render(<ProfesorView />);
 
     await waitFor(() => {
@@ -123,9 +160,72 @@ describe('ProfesorView', () => {
       ).toBeInTheDocument();
     });
 
+    await user.type(
+      screen.getByPlaceholderText(/nombre del curso/i),
+      'Ingeniería de Software'
+    );
+
+    const seccionCrearCurso = screen
+      .getByRole('heading', { name: /crear curso/i })
+      .closest('section');
+    const semestreSelect = within(seccionCrearCurso).getByRole('combobox');
+
+    await user.selectOptions(semestreSelect, 'semestre-1');
+    await user.click(screen.getByRole('button', { name: /crear curso/i }));
+
+    await waitFor(() => {
+      expect(axios.post).toHaveBeenCalledWith(
+        'http://localhost:3000/api/curso/crear',
+        {
+          nombre: 'Ingeniería de Software',
+          refSemestre: 'semestre-1',
+        },
+        {
+          headers: {
+            Authorization: 'Bearer token-profesor',
+          },
+        }
+      );
+    });
+  });
+
+  it('permite crear un grupo para un curso', async () => {
+    const user = userEvent.setup();
+
+    render(<ProfesorView />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/sistema operativo y distribuido/i)
+      ).toBeInTheDocument();
+    });
+
+    await user.type(
+      screen.getByPlaceholderText(/nombre del grupo/i),
+      'Grupo B'
+    );
+    await user.click(screen.getByRole('button', { name: /crear grupo/i }));
+
+    await waitFor(() => {
+      expect(axios.post).toHaveBeenCalledWith(
+        'http://localhost:3000/api/grupo-curso/crear',
+        {
+          refCurso: 'curso-1',
+          nombreGrupo: 'Grupo B',
+        },
+        {
+          headers: {
+            Authorization: 'Bearer token-profesor',
+          },
+        }
+      );
+    });
+
     expect(
-      screen.queryByRole('button', { name: /nuevo curso/i })
-    ).not.toBeInTheDocument();
+      axios.get.mock.calls.some(([url]) =>
+        url.includes('/api/grupo-curso/curso/curso-1')
+      )
+    ).toBe(true);
   });
 
   it('muestra las acciones para cargar CSV y ver estudiantes', async () => {

@@ -1,3 +1,5 @@
+const { validarDominioCorreoPorRol } = require('../utils/emailDomainPolicy');
+
 const validarRegistro = (req, res, next) => {
   const { rut, nombre, apellido, correo, contrasena, rol } = req.body;
 
@@ -28,6 +30,11 @@ const validarRegistro = (req, res, next) => {
   const rolesValidos = ['ESTUDIANTE', 'SOLICITANTE'];
   if (!rolesValidos.includes(rol)) {
     return res.status(400).json({ mensaje: 'Rol no es valido' });
+  }
+
+  const validacionDominio = validarDominioCorreoPorRol(correo, rol);
+  if (!validacionDominio.esValido) {
+    return res.status(400).json({ mensaje: validacionDominio.mensaje });
   }
 
   return next();

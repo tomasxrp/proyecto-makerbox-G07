@@ -17,7 +17,42 @@ describe('CursoService', () => {
           'semestre-1',
           'profesor-1'
         )
-      ).rejects.toThrow('Solo un administrador puede crear cursos');
+      ).rejects.toThrow('Solo administrador o profesor pueden crear cursos');
+    });
+
+    it('Deberia crear curso si el usuario es PROFESOR y asignarlo a sí mismo', async () => {
+      const usuarioProfesor = { rol: 'PROFESOR', id: 'profesor-2' };
+
+      mockPrisma.semestre.findUnique.mockResolvedValue({
+        id: 'semestre-1',
+        anio: 2026,
+        periodo: 1,
+      });
+      mockPrisma.usuario.findUnique.mockResolvedValue({
+        id: 'profesor-2',
+        usuarioRol: 'PROFESOR',
+      });
+      mockPrisma.curso.create.mockResolvedValue({
+        id: 'curso-999',
+        nombre: 'Curso Profesor',
+        refSemestre: 'semestre-1',
+        refProfesor: 'profesor-2',
+      });
+
+      await cursoService.crearCurso(
+        usuarioProfesor,
+        'Curso Profesor',
+        'semestre-1',
+        'profesor-2'
+      );
+
+      expect(mockPrisma.curso.create).toHaveBeenCalledWith({
+        data: {
+          nombre: 'Curso Profesor',
+          refSemestre: 'semestre-1',
+          refProfesor: 'profesor-2',
+        },
+      });
     });
 
     it('Deberia crear un curso de manera correcta si el rol es ADMINISTRADOR', async () => {

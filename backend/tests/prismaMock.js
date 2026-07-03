@@ -58,6 +58,11 @@ const mockPrisma = {
     update: jest.fn(),
   },
 
+  cursoAyudante: {
+    findUnique: jest.fn(),
+    findMany: jest.fn(),
+  },
+
   estudianteCursoPendiente: {
     create: jest.fn(),
     upsert: jest.fn(),

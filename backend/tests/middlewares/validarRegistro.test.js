@@ -58,11 +58,30 @@ describe('Middleware: validarRegistro', () => {
       rut: '1',
       nombre: 'J',
       apellido: 'P',
-      correo: 'test@utalca.cl',
+      correo: 'test@alumnos.utalca.cl',
       contrasena: 'Pass1234',
       rol: 'ESTUDIANTE',
     };
     validarRegistro(req, res, next);
     expect(next).toHaveBeenCalled();
+  });
+
+  it('Debería retornar 400 si estudiante no usa dominio alumnos.utalca.cl', () => {
+    req.body = {
+      rut: '1',
+      nombre: 'J',
+      apellido: 'P',
+      correo: 'test@utalca.cl',
+      contrasena: 'Pass1234',
+      rol: 'ESTUDIANTE',
+    };
+
+    validarRegistro(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      mensaje:
+        'El correo para estudiantes debe usar el dominio @alumnos.utalca.cl',
+    });
   });
 });

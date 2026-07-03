@@ -23,7 +23,7 @@ describe('UsuarioService', () => {
           '111-1',
           'Juan',
           'Perez',
-          'test@utalca.cl',
+          'test@alumnos.utalca.cl',
           'Pass123!',
           'ESTUDIANTE'
         )
@@ -43,7 +43,7 @@ describe('UsuarioService', () => {
         rut: '111-1',
         nombre: 'Juan',
         apellido: 'Perez',
-        correo: 'test@utalca.cl',
+        correo: 'test@alumnos.utalca.cl',
         usuarioRol: 'ESTUDIANTE',
       };
       mockPrisma.usuario.create.mockResolvedValue(usuarioMock);
@@ -52,16 +52,62 @@ describe('UsuarioService', () => {
         '111-1',
         'Juan',
         'Perez',
-        'test@utalca.cl',
+        'test@alumnos.utalca.cl',
         'Pass123!',
         'ESTUDIANTE'
       );
 
-      expect(resultado.email).toBe('test@utalca.cl');
+      expect(resultado.email).toBe('test@alumnos.utalca.cl');
       expect(mockPrisma.usuario.create).toHaveBeenCalledTimes(1);
       expect(
         mockPrisma.estudianteCursoPendiente.findMany
       ).toHaveBeenCalledTimes(1);
+    });
+
+    it('Debería lanzar error si estudiante usa dominio incorrecto', async () => {
+      mockPrisma.usuario.findUnique.mockResolvedValue(null);
+
+      await expect(
+        usuarioService.registrarUsuario(
+          '111-1',
+          'Juan',
+          'Perez',
+          'test@utalca.cl',
+          'Pass123!',
+          'ESTUDIANTE'
+        )
+      ).rejects.toThrow(
+        'El correo para estudiantes debe usar el dominio @alumnos.utalca.cl'
+      );
+    });
+
+    it('Debería validar dominio para profesor en creación interna', async () => {
+      const usuarioAdmin = { rol: 'ADMINISTRADOR' };
+      mockPrisma.usuario.findFirst.mockResolvedValue(null);
+      bcrypt.genSalt.mockResolvedValue('salt');
+      bcrypt.hash.mockResolvedValue('hashedPassword');
+      mockPrisma.usuario.create.mockResolvedValue({
+        id: 'profe-1',
+        rut: '222-2',
+        nombre: 'Profe',
+        apellido: 'Demo',
+        correo: 'profe@utalca.cl',
+        usuarioRol: 'PROFESOR',
+      });
+
+      await expect(
+        usuarioService.crearUsuarioInterno(
+          usuarioAdmin,
+          '222-2',
+          'Profe',
+          'Demo',
+          'profe@alumnos.utalca.cl',
+          'Pass123!',
+          'PROFESOR'
+        )
+      ).rejects.toThrow(
+        'El correo para profesores debe usar el dominio @utalca.cl'
+      );
     });
   });
 
@@ -79,7 +125,7 @@ describe('UsuarioService', () => {
         id: 1,
         nombre: 'Juan',
         apellido: 'Perez',
-        correo: 'test@utalca.cl',
+        correo: 'test@alumnos.utalca.cl',
         passUsuario: 'hashed',
         usuarioRol: 'ESTUDIANTE',
       };
@@ -88,7 +134,7 @@ describe('UsuarioService', () => {
       jwt.sign.mockReturnValue('fake-jwt-token');
 
       const resultado = await usuarioService.loginUsuario(
-        'test@utalca.cl',
+        'test@alumnos.utalca.cl',
         'password'
       );
 
@@ -101,7 +147,10 @@ describe('UsuarioService', () => {
     it('Debería lanzar error si el usuario no es ADMINISTRADOR', async () => {
       const usuarioLogueado = { rol: 'ESTUDIANTE' };
       await expect(
-        usuarioService.eliminarUsuario(usuarioLogueado, 'test@utalca.cl')
+        usuarioService.eliminarUsuario(
+          usuarioLogueado,
+          'test@alumnos.utalca.cl'
+        )
       ).rejects.toThrow('El usuario no tiene los permisos necesarios');
     });
   });

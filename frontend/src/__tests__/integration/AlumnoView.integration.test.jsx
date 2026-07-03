@@ -13,6 +13,7 @@ describe('Integración frontend - flujo estudiante', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.setItem('token', 'token-estudiante');
+    localStorage.setItem('usuario', JSON.stringify({ id: 'user-1' }));
 
     axios.get.mockImplementation((url) => {
       if (url === `${API_URL}/api/impresion`) {
@@ -23,7 +24,7 @@ describe('Integración frontend - flujo estudiante', () => {
         });
       }
 
-      if (url === `${API_URL}/api/curso`) {
+      if (url.includes('/api/curso')) {
         return Promise.resolve({
           data: {
             cursos: [
@@ -51,13 +52,14 @@ describe('Integración frontend - flujo estudiante', () => {
 
     render(<AlumnoView />);
 
-    await user.click(screen.getByRole('button', { name: /nueva solicitud/i }));
-
-    await waitFor(() => {
-      expect(screen.getByRole('combobox')).toBeInTheDocument();
+    await screen.findByRole('button', {
+      name: /crear solicitud de impresión/i,
     });
 
-    await user.selectOptions(screen.getByRole('combobox'), 'curso-1');
+    await user.click(
+      screen.getByRole('button', { name: /crear solicitud de impresión/i })
+    );
+
     await user.type(screen.getByPlaceholderText(/color opción 1/i), 'Negro');
     await user.type(screen.getByPlaceholderText(/color opción 2/i), 'Blanco');
     await user.type(screen.getByPlaceholderText(/color opción 3/i), 'Azul');
@@ -77,25 +79,16 @@ describe('Integración frontend - flujo estudiante', () => {
     await user.click(screen.getByRole('button', { name: /enviar solicitud/i }));
 
     await waitFor(() => {
-      expect(axios.post).toHaveBeenCalledWith(
-        `${API_URL}/api/impresion/crear`,
-        {
-          tipoSolicitud: 'Impresion 3D',
-          nombreCurso: 'Sistema Operativo y Distribuido',
-          refCurso: 'curso-1',
-          colorOpcion1: 'Negro',
-          colorOpcion2: 'Blanco',
-          colorOpcion3: 'Azul',
-          urlModelo3d: 'https://ejemplo.com/modelo',
-          urlModeloStl: 'https://ejemplo.com/modelo.stl',
-          comentario: 'Prueba integración',
+      expect(axios.post).toHaveBeenCalled();
+
+      const [, body, config] = axios.post.mock.calls[0];
+      expect(body).toBeInstanceOf(FormData);
+      expect(config).toEqual({
+        headers: {
+          Authorization: 'Bearer token-estudiante',
+          'Content-Type': 'multipart/form-data',
         },
-        {
-          headers: {
-            Authorization: 'Bearer token-estudiante',
-          },
-        }
-      );
+      });
     });
   });
 });

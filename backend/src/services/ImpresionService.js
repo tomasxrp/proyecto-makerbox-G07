@@ -1,4 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
+const { enviarCorreoCambioEstadoSolicitud } = require('./EmailService');
 
 const prisma = new PrismaClient();
 
@@ -7,6 +8,27 @@ const crearImpresion = async (usuario, datos) => {
 
   if (rolUsuario !== 'ESTUDIANTE' && rolUsuario !== 'SOLICITANTE') {
     throw new Error('Solo estudiantes o solicitantes pueden crear solicitudes');
+  }
+
+  if (rolUsuario === 'ESTUDIANTE') {
+    if (!datos.refCurso) {
+      throw new Error('Debes seleccionar un curso para crear la solicitud');
+    }
+
+    const inscripcion = await prisma.estudianteCurso.findUnique({
+      where: {
+        refCurso_refEstudiante: {
+          refCurso: datos.refCurso,
+          refEstudiante: usuario.id,
+        },
+      },
+    });
+
+    if (!inscripcion) {
+      throw new Error(
+        'Solo puedes crear solicitudes para cursos donde estás inscrito'
+      );
+    }
   }
 
   const nuevaImpresion = await prisma.impresion.create({
@@ -31,9 +53,22 @@ const crearImpresion = async (usuario, datos) => {
 const obtenerImpresiones = async (usuario) => {
   const rolUsuario = usuario.rol || usuario.usuarioRol;
 
+  const includeSolicitud = {
+    curso: true,
+    estudiante: {
+      select: {
+        id: true,
+        nombre: true,
+        apellido: true,
+        correo: true,
+      },
+    },
+  };
+
   // 1. ADMINISTRADOR: Puede ver todo el historial de la universidad
   if (rolUsuario === 'ADMINISTRADOR') {
     return prisma.impresion.findMany({
+      include: includeSolicitud,
       orderBy: { creadoEn: 'desc' },
     });
   }
@@ -42,6 +77,7 @@ const obtenerImpresiones = async (usuario) => {
   if (rolUsuario === 'ESTUDIANTE' || rolUsuario === 'SOLICITANTE') {
     return prisma.impresion.findMany({
       where: { refEstudiante: usuario.id },
+      include: includeSolicitud,
       orderBy: { creadoEn: 'desc' },
     });
   }
@@ -54,6 +90,7 @@ const obtenerImpresiones = async (usuario) => {
           refProfesor: usuario.id,
         },
       },
+      include: includeSolicitud,
       orderBy: { creadoEn: 'desc' },
     });
   }
@@ -61,6 +98,26 @@ const obtenerImpresiones = async (usuario) => {
   // 4. AYUDANTE: Solo ve solicitudes de los cursos en los que imparte ayudantías,
   // o aquellas impresiones que ya tomó/tiene asignadas.
   if (rolUsuario === 'AYUDANTE') {
+    const [cantidadAyudantias, cantidadAsignacionesCurso] = await Promise.all([
+      prisma.ayudantia.count({
+        where: {
+          refAyudante: usuario.id,
+        },
+      }),
+      prisma.cursoAyudante.count({
+        where: {
+          refUsuario: usuario.id,
+        },
+      }),
+    ]);
+
+    if (cantidadAyudantias === 0 && cantidadAsignacionesCurso === 0) {
+      return prisma.impresion.findMany({
+        include: includeSolicitud,
+        orderBy: { creadoEn: 'desc' },
+      });
+    }
+
     return prisma.impresion.findMany({
       where: {
         OR: [
@@ -74,10 +131,20 @@ const obtenerImpresiones = async (usuario) => {
             },
           },
           {
+            curso: {
+              cursoAyudantes: {
+                some: {
+                  refUsuario: usuario.id,
+                },
+              },
+            },
+          },
+          {
             refAyudante: usuario.id,
           },
         ],
       },
+      include: includeSolicitud,
       orderBy: { creadoEn: 'desc' },
     });
   }
@@ -101,6 +168,14 @@ const cambiarEstadoImpresion = async (usuario, impresionId, nuevoEstado) => {
 
   const impresionExistente = await prisma.impresion.findUnique({
     where: { id: impresionId },
+    include: {
+      estudiante: {
+        select: {
+          nombre: true,
+          correo: true,
+        },
+      },
+    },
   });
 
   if (!impresionExistente) {
@@ -121,6 +196,54 @@ const cambiarEstadoImpresion = async (usuario, impresionId, nuevoEstado) => {
       refAyudante: usuario.id,
     },
   });
+
+  const usuarioActor = await prisma.usuario.findUnique({
+    where: { id: usuario.id },
+    select: {
+      nombre: true,
+      apellido: true,
+      correo: true,
+    },
+  });
+
+  const nombreActor = [
+    usuarioActor ? usuarioActor.nombre : '',
+    usuarioActor ? usuarioActor.apellido : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+
+  const correoDestino =
+    (impresionExistente.estudiante
+      ? impresionExistente.estudiante.correo
+      : null) || impresionExistente.solicitanteCorreo;
+
+  if (correoDestino) {
+    try {
+      await enviarCorreoCambioEstadoSolicitud({
+        destinatario: correoDestino,
+        nombreDestinatario:
+          (impresionExistente.estudiante
+            ? impresionExistente.estudiante.nombre
+            : null) ||
+          impresionExistente.solicitanteNombre ||
+          'estudiante',
+        estadoAnterior: impresionExistente.estado,
+        estadoNuevo: nuevoEstado,
+        nombreCurso: impresionExistente.nombreCurso,
+        solicitudId: impresionExistente.id,
+        replyTo: usuarioActor ? usuarioActor.correo : null,
+        nombreRemitente: nombreActor || 'equipo docente',
+      });
+    } catch (error) {
+      process.stderr.write(
+        `[EmailService] Error al enviar correo de cambio de estado: ${
+          error.message || error
+        }\n`
+      );
+    }
+  }
 
   return impresionActualizada;
 };

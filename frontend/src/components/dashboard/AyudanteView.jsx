@@ -13,13 +13,13 @@ export default function AyudanteView() {
   const token = localStorage.getItem('token');
 
   const cargarImpresiones = useCallback(async () => {
-    const response = await axios.get(`${API_URL}/api/impresion`, {
+    const response = await axios.get(`${API_URL}/api/ayudante/solicitudes`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
 
-    setImpresiones(response.data.impresiones || []);
+    setImpresiones(response.data.solicitudes || []);
   }, [token]);
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export default function AyudanteView() {
 
     try {
       await axios.put(
-        `${API_URL}/api/impresion/${impresionId}/estado`,
+        `${API_URL}/api/ayudante/solicitudes/${impresionId}`,
         { estado },
         {
           headers: {
@@ -105,6 +105,19 @@ export default function AyudanteView() {
 
                 <p>
                   <strong>Comentario:</strong> {impresion.comentario}
+                </p>
+
+                <p>
+                  <strong>Solicitante:</strong>{' '}
+                  {impresion.estudiante
+                    ? `${impresion.estudiante.nombre || ''} ${
+                        impresion.estudiante.apellido || ''
+                      }`.trim() || 'Sin nombre'
+                    : impresion.solicitanteNombre || 'Sin nombre'}{' '}
+                  ·{' '}
+                  {impresion.estudiante
+                    ? impresion.estudiante.correo || 'Sin correo'
+                    : impresion.solicitanteCorreo || 'Sin correo'}
                 </p>
 
                 <p>

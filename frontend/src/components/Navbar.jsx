@@ -6,6 +6,11 @@ export default function Navbar({ onToggleSidebar }) {
   const navigate = useNavigate();
 
   const user = JSON.parse(localStorage.getItem('usuario') || '{}');
+  const ultimoAcceso = localStorage.getItem('ultimoAcceso');
+
+  const ultimoAccesoFormateado = ultimoAcceso
+    ? new Date(ultimoAcceso).toLocaleString('es-CL')
+    : 'Sin registros';
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -41,6 +46,10 @@ export default function Navbar({ onToggleSidebar }) {
           <span>
             {user.nombre || 'Usuario'} · {user.rol || 'ROL'}
           </span>
+        </div>
+
+        <div className="hidden rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/75 md:block">
+          Última conexión: {ultimoAccesoFormateado}
         </div>
 
         <button

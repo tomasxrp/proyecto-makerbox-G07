@@ -1,11 +1,37 @@
 const impresionService = require('../services/ImpresionService');
 
+const construirUrlArchivo = (req, file) => {
+  if (!file) {
+    return '';
+  }
+
+  return `${req.protocol}://${req.get('host')}/uploads/impresiones/${file.filename}`;
+};
+
 const crearImpresion = async (req, res) => {
   try {
     const { usuario } = req;
+    const files = req.files || {};
+    const archivoModelo3d = files.modelo3d ? files.modelo3d[0] : null;
+    const archivoModeloStl = files.modeloStl ? files.modeloStl[0] : null;
+
+    const payload = {
+      ...req.body,
+      urlModelo3d:
+        req.body.urlModelo3d || construirUrlArchivo(req, archivoModelo3d),
+      urlModeloStl:
+        req.body.urlModeloStl || construirUrlArchivo(req, archivoModeloStl),
+    };
+
+    if (!payload.urlModelo3d || !payload.urlModeloStl) {
+      throw new Error(
+        'Debes adjuntar archivos o ingresar URLs para el modelo 3D y STL'
+      );
+    }
+
     const nuevaImpresion = await impresionService.crearImpresion(
       usuario,
-      req.body
+      payload
     );
 
     res.status(201).json({

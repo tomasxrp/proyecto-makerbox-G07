@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const usuarioRoutes = require('./routes/UsuarioRoutes');
 const semestreRoutes = require('./routes/SemestreRoutes');
 const articuloRoutes = require('./routes/ArticuloRoutes');
@@ -13,6 +14,7 @@ const estudianteCursoRoutes = require('./routes/EstudianteCursoRoutes');
 const grupoCursoRoutes = require('./routes/GrupoCursoRoutes');
 const usoImpresionRoutes = require('./routes/UsoImpresionRoutes');
 const ayudantiaRoutes = require('./routes/AyudantiaRoutes');
+const ayudanteCursoRoutes = require('./routes/AyudanteCursoRoutes');
 const grupoEstudianteRoutes = require('./routes/GrupoEstudianteRoutes');
 
 const app = express();
@@ -21,6 +23,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/semestre', semestreRoutes);
 app.use('/api/articulo', articuloRoutes);
@@ -33,6 +36,7 @@ app.use('/api/estudiante-curso', estudianteCursoRoutes);
 app.use('/api/grupo-curso', grupoCursoRoutes);
 app.use('/api/uso-impresion', usoImpresionRoutes);
 app.use('/api/ayudantia', ayudantiaRoutes);
+app.use('/api/ayudante', ayudanteCursoRoutes);
 app.use('/api/grupo-estudiante', grupoEstudianteRoutes);
 app.get('/', (req, res) => {
   res.send('Peticion GET recibida en el backend');

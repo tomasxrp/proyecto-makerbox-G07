@@ -16,7 +16,7 @@ describe('AyudanteView', () => {
 
     axios.get.mockResolvedValue({
       data: {
-        impresiones: [
+        solicitudes: [
           {
             id: 'impresion-1',
             tipoSolicitud: 'Impresion 3D',
@@ -68,7 +68,7 @@ describe('AyudanteView', () => {
 
     await waitFor(() => {
       expect(axios.put).toHaveBeenCalledWith(
-        `${API_URL}/api/impresion/impresion-1/estado`,
+        `${API_URL}/api/ayudante/solicitudes/impresion-1`,
         { estado: 'EN_PROCESO' },
         {
           headers: {
