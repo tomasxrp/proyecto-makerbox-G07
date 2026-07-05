@@ -1,8 +1,9 @@
+import React from 'react';
+import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, onClose }) {
   const storedUser = JSON.parse(localStorage.getItem('usuario') || '{}');
-  const userName = storedUser.nombre || 'Usuario';
   const userRole = storedUser.rol || 'SOLICITANTE';
 
   const isAdmin = userRole === 'ADMINISTRADOR';
@@ -10,60 +11,101 @@ export default function Sidebar() {
   const isStudent = userRole === 'ESTUDIANTE';
 
   return (
-    <aside className="w-64 min-h-screen bg-primary text-white p-5">
-      {/* Usuario */}
-      <div className="mb-8">
-        <h2 className="text-xl font-bold">{userName}</h2>
-        <p className="text-sm opacity-70">{userRole}</p>
-      </div>
+    <>
+      {isOpen && (
+        <button
+          type="button"
+          aria-label="Cerrar sidebar"
+          onClick={onClose}
+          className="fixed inset-0 bg-black/40 z-40"
+        />
+      )}
 
-      <nav className="flex flex-col gap-4">
-        <Link to="/home" className="hover:bg-white/10 p-2 rounded">
-          🏠 Inicio
-        </Link>
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-white/10 bg-sidebar text-white shadow-2xl shadow-primary/20 transition-transform duration-300 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex h-16 items-center justify-between border-b border-white/10 px-5">
+          <div>
+            <p className="text-[0.65rem] uppercase tracking-[0.35em] text-secondary/80">
+              MakerBox
+            </p>
+            <h2 className="text-lg font-semibold">Navegación</h2>
+          </div>
 
-        {/* ADMIN */}
-        {isAdmin && (
-          <>
-            <Link to="/usuarios" className="hover:bg-white/10 p-2 rounded">
-              👥 Usuarios
-            </Link>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full px-2 py-1 text-white/80 transition hover:bg-white/10 hover:text-white"
+          >
+            ✕
+          </button>
+        </div>
 
-            <Link to="/reportes" className="hover:bg-white/10 p-2 rounded">
+        <nav className="flex flex-1 flex-col gap-2 px-4 py-5">
+          <Link
+            to="/home"
+            onClick={onClose}
+            className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
+          >
+            🏠 Inicio
+          </Link>
+
+          {isAdmin && (
+            <Link
+              to="/reportes"
+              onClick={onClose}
+              className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
+            >
               📊 Reportes
             </Link>
-          </>
-        )}
+          )}
 
-        {/* PROFESOR */}
-        {isProfessor && (
-          <>
-            <Link to="/cursos" className="hover:bg-white/10 p-2 rounded">
-              📚 Cursos
-            </Link>
+          {isProfessor && (
+            <>
+              <Link
+                to="/cursos"
+                onClick={onClose}
+                className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
+              >
+                📚 Cursos
+              </Link>
+              <Link
+                to="/proyectos"
+                onClick={onClose}
+                className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
+              >
+                📦 Proyectos
+              </Link>
+            </>
+          )}
 
-            <Link to="/proyectos" className="hover:bg-white/10 p-2 rounded">
-              📦 Proyectos
-            </Link>
-          </>
-        )}
-
-        {/* ALUMNO */}
-        {isStudent && (
-          <>
-            <Link to="/mis-proyectos" className="hover:bg-white/10 p-2 rounded">
+          {isStudent && (
+            <Link
+              to="/mis-proyectos"
+              onClick={onClose}
+              className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
+            >
               📦 Mis Proyectos
             </Link>
+          )}
+        </nav>
 
-            <Link
-              to="/mis-impresiones"
-              className="hover:bg-white/10 p-2 rounded"
-            >
-              🖨️ Mis Impresiones
-            </Link>
-          </>
-        )}
-      </nav>
-    </aside>
+        <div className="border-t border-white/10 px-5 py-4 text-xs text-white/45">
+          Tu rol define los accesos visibles.
+        </div>
+      </aside>
+    </>
   );
 }
+
+Sidebar.propTypes = {
+  isOpen: PropTypes.bool,
+  onClose: PropTypes.func,
+};
+
+Sidebar.defaultProps = {
+  isOpen: false,
+  onClose: () => {},
+};

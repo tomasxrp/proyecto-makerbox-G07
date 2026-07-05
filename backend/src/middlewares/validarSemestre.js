@@ -5,7 +5,7 @@ const validarSemestre = (req, res, next) => {
   if (!anio || !periodo || !fechaInicio || !fechaFin) {
     return res
       .status(400)
-      .json({ mensaje: 'Correo y contraseña son obligatorios' });
+      .json({ mensaje: 'Faltan datos obligatorios para el semestre' });
   }
 
   // Validacion de que el periodo o semestre sean numeros
@@ -32,6 +32,18 @@ const validarSemestre = (req, res, next) => {
           'El estado debe ser uno de los valores validos (ACTIVO, INACTIVO)',
       });
     }
+  }
+
+  if (new Date(fechaInicio) >= new Date(fechaFin)) {
+    return res.status(400).json({
+      mensaje: 'La fecha de inicio no puede ser mayor a la fecha fin',
+    });
+  }
+
+  if (periodo !== 1 && periodo !== 2) {
+    return res.status(400).json({
+      mensaje: 'El periodo debe ser 1 o 2',
+    });
   }
 
   return next();

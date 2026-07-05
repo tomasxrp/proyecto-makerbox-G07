@@ -17,5 +17,7 @@ router.delete(
   validarToken,
   semestreController.eliminarSemestre
 );
+router.get('/:semestreId', semestreController.obtenerSemestrePorId);
+router.get('/', semestreController.obtenerSemestres);
 
 module.exports = router;

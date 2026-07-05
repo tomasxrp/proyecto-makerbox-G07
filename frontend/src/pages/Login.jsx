@@ -1,13 +1,22 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 export default function Login() {
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+
+    if (token) {
+      navigate('/home');
+    }
+  }, [navigate]);
+
   const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -30,9 +39,21 @@ export default function Login() {
         'usuario',
         JSON.stringify(data.resultadoLogin.usuario)
       );
+      localStorage.setItem('ultimoAcceso', new Date().toISOString());
 
-      // redirigir
-      navigate('/home');
+      const { rol } = data.resultadoLogin.usuario;
+
+      if (rol === 'ADMINISTRADOR') {
+        navigate('/home');
+      } else if (rol === 'PROFESOR') {
+        navigate('/home');
+      } else if (rol === 'ESTUDIANTE') {
+        navigate('/home');
+      } else if (rol === 'SOLICITANTE') {
+        navigate('/home');
+      } else {
+        navigate('/home');
+      }
     } catch (error) {
       setErrorMsg(
         (error.response &&
